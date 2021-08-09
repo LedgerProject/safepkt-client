@@ -1,5 +1,8 @@
 # SafePKT  client
 
+In-browser application for running
+static analysis of rust-based smart contracts
+
 ## Installation
 
 Install dependencies

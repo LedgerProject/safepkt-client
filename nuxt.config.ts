@@ -11,6 +11,8 @@ type Route = {
 }
 
 const config: NuxtConfig = {
+  pattern: '**/*.{vue,js}',
+
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
 
@@ -62,7 +64,9 @@ const config: NuxtConfig = {
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
-  css: ['./styles/variables.scss'],
+  css: [
+    './styles/variables.scss'
+  ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
@@ -84,7 +88,7 @@ const config: NuxtConfig = {
 
   pwa: {
     icon: {
-      source: '~assets/safepkt.png'
+      source: '~/assets/safepkt.png'
     },
     manifest: {
       name: title,

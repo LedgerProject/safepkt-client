@@ -1,0 +1,18 @@
+.head {
+  display: flex;
+  flex-direction: row;
+  margin: auto;
+  width: var(--max-width);
+
+  h1 {
+    display: flex;
+    margin: auto;
+    align-self: center;
+  }
+
+  img {
+    display: flex;
+    justify-self: left;
+    align-self: flex-start;
+  }
+}
