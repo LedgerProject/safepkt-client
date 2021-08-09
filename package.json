@@ -1,0 +1,51 @@
+{
+  "name": "safepkt-client",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "make development-server",
+    "build": "make build",
+    "start": "make start",
+    "lint": "eslint --ext .ts,.js,.vue ."
+  },
+  "dependencies": {
+    "@babel/runtime-corejs3": "^7.14.9",
+    "@nuxt/typescript-runtime": "^2.0.0",
+    "core-js": "^3.15.1",
+    "csstype": "^3.0.8",
+    "nuxt": "^2.15.7",
+    "nuxt-lazysizes": "^1.4.0",
+    "nuxt-property-decorator": "^2.9.1",
+    "vue-property-decorator": "^9.1.2"
+  },
+  "devDependencies": {
+    "@nuxt/types": "^2.15.7",
+    "@nuxt/typescript-build": "^2.1.0",
+    "@vue/test-utils": "^1.2.1",
+    "@typescript-eslint/eslint-plugin": "^4.25.0",
+    "@typescript-eslint/parser": "^4.25.0",
+    "@nuxtjs/dotenv": "^1.4.1",
+    "@nuxtjs/eslint-config-typescript": "^6.0.1",
+    "@nuxtjs/pwa": "^3.3.5",
+    "@nuxtjs/router": "^1.5.0",
+    "@nuxtjs/style-resources": "^1.0.0",
+    "@nuxtjs/svg": "^0.1.12",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^27.0.5",
+    "eslint": "^7.27.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-loader": "^4.0.2",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-typescript": "^0.14.0",
+    "eslint-plugin-vue": "^7.10.0",
+    "node-sass": "^5.0.0",
+    "prettier": "^2.3.0",
+    "sass-loader": "^10.2.0",
+    "jest": "^27.0.5",
+    "ts-jest": "^27.0.3",
+    "typescript-eslint-parser": "^22.0.0",
+    "vue-jest": "^3.0.4",
+    "vuex-module-decorators": "^1.0.1"
+  }
+}
