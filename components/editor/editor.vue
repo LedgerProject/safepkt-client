@@ -1,6 +1,17 @@
 <template>
   <div class="editor">
+    <label for="project_name">
+      Project name:
+      <input
+        id="project_name"
+        v-model="projectName"
+        maxlength="30"
+        class="editor__project-name"
+        type="text"
+      >
+    </label>
     <prism-editor v-model="source" class="editor__inner-editor" :highlight="highlighter" line-numbers />
+    <input v-model="projectId" type="hidden">
   </div>
 </template>
 
@@ -13,10 +24,11 @@ import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewher
 import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-rust'
-import 'prismjs/themes/prism-tomorrow.css'
+import 'prismjs/themes/prism-okaidia.css'
+import EventBus from '~/modules/event-bus'
+import { EditorEvents } from '~/modules/events'
 
-const defaultSourceSnippet = `
-use verification_annotations::prelude::*;
+const defaultSourceSnippet = `use verification_annotations::prelude::*;
 
 fn main() {
     let a = u32::abstract_value();
@@ -34,19 +46,40 @@ fn main() {
 @Component({
   components: { PrismEditor }
 })
-class Editor extends Vue {
-  source: string = defaultSourceSnippet
+export default class Editor extends Vue {
+  source!: string = defaultSourceSnippet
+  projectName!: string = 'KLEE :: multiplication demo '
+  projectId!: string = ''
+
+  created () {
+    EventBus.$off(EditorEvents.projectIdentified)
+    EventBus.$on(EditorEvents.projectIdentified, this.setProjectId)
+  }
+
+  destroyed () {
+    EventBus.$off(EditorEvents.projectIdentified)
+  }
 
   highlighter (source: string) {
     return highlight(source, languages.rust)
   }
 
+  getProjectName (): string {
+    return this.projectName
+  }
+
+  getProjectId (): string {
+    return this.projectId
+  }
+
   base64EncodedSource (): string {
     return btoa(this.source)
   }
-}
 
-export default Editor
+  setProjectId ({ projectId }: {projectId: string}): void {
+    this.projectId = projectId
+  }
+}
 </script>
 
 <style lang="scss" scoped>

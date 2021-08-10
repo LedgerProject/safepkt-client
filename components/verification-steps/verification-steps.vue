@@ -3,32 +3,70 @@
     <button @click="uploadSource">
       Upload source code
     </button>
-    <button @click="generateLLVMBitcode">
+    <button
+      :class="generateLlvmBitcodeButtonClasses()"
+      :disabled="!canGenerateLlvmBitcode"
+      @click="generateLlvmBitcode"
+    >
       Generate LLVM bitcode
     </button>
-    <button @click="runSymbolicExecution">
+    <button
+      :class="symbolicExecutionButtonClasses()"
+      :disabled="!canRunSymbolicExecution"
+      @click="runSymbolicExecution"
+    >
       Run symbolic execution
     </button>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'nuxt-property-decorator'
+import { Component, Prop, Vue } from 'nuxt-property-decorator'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 
 @Component
 export default class VerificationSteps extends Vue {
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  canGenerateLlvmBitcode!: boolean;
+
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  canRunSymbolicExecution!: boolean;
+
   uploadSource () {
     EventBus.$emit(VerificationEvents.sourceUploaded)
   }
 
-  generateLLVMBitcode () {
+  generateLlvmBitcode () {
     EventBus.$emit(VerificationEvents.llvmBitcodeGenerationStarted)
   }
 
   runSymbolicExecution () {
     EventBus.$emit(VerificationEvents.symbolicExecutionStarted)
+  }
+
+  generateLlvmBitcodeButtonClasses () {
+    if (!this.canGenerateLlvmBitcode) {
+      return this.getDefaultDisabledButtonClass()
+    }
+  }
+
+  symbolicExecutionButtonClasses () {
+    if (!this.canRunSymbolicExecution) {
+      return this.getDefaultDisabledButtonClass()
+    }
+  }
+
+  getDefaultDisabledButtonClass () {
+    return {
+      'verification-steps__disabled': true
+    }
   }
 }
 </script>

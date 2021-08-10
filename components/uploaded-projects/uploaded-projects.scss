@@ -1,0 +1,14 @@
+
+.uploaded-projects {
+  text-align: left;
+  margin: auto;
+  width: var(--max-width);
+
+  &__list {
+    list-style-type: none;
+  }
+
+  &__item {
+    padding-bottom: 8px;
+  }
+}

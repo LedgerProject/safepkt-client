@@ -3,6 +3,23 @@
   margin: auto;
   width: var(--max-width);
 
+  [for=project_name] {
+    display: flex;
+    font-size: 1em;
+    justify-self: flex-start;
+    align-items: center;
+  }
+
+  &__project-name {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 1em;
+    margin-left: 8px;
+    padding: 8px;
+    width: 350px;
+    text-align: right;
+  }
+
   &__inner-editor {
     background: #2d2d2d;
     color: #ccc;

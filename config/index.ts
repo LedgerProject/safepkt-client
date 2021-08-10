@@ -73,44 +73,44 @@ const api: Api = {
     },
     startLLVMBitcodeGeneration: {
       method: METHOD_POST,
-      url: '/llvm-bitcode-generation/{{ project_id }}',
+      url: '/llvm-bitcode-generation/{{ projectId }}',
       params: {
-        project_id: String
+        projectId: String
       }
     },
     getLLVMBitcodeGenerationProgress: {
       method: METHOD_GET,
-      url: '/llvm-bitcode-generation/{{ project_id }}/progress',
+      url: '/llvm-bitcode-generation/{{ projectId }}/progress',
       params: {
-        project_id: String
+        projectId: String
       }
     },
     getLLVMBitcodeGenerationReport: {
       method: METHOD_GET,
-      url: '/llvm-bitcode-generation/{{ project_id }}/report',
+      url: '/llvm-bitcode-generation/{{ projectId }}/report',
       params: {
-        project_id: String
+        projectId: String
       }
     },
     startSymbolicExecution: {
       method: METHOD_POST,
-      url: '/symbolic-execution/{{ project_id }}',
+      url: '/symbolic-execution/{{ projectId }}',
       params: {
-        project_id: String
+        projectId: String
       }
     },
     getSymbolicExecutionProgress: {
       method: METHOD_GET,
-      url: '/symbolic-execution/{{ project_id }}/progress',
+      url: '/symbolic-execution/{{ projectId }}/progress',
       params: {
-        project_id: String
+        projectId: String
       }
     },
     getSymbolicExecutionReport: {
       method: METHOD_GET,
-      url: '/symbolic-execution/{{ project_id }}/report',
+      url: '/symbolic-execution/{{ projectId }}/report',
       params: {
-        project_id: String
+        projectId: String
       }
     }
   }
