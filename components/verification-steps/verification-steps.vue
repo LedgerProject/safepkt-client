@@ -98,12 +98,12 @@ export default class VerificationSteps extends Vue {
   isVerificationStepSuccessful (project: Project, step: VerificationStep): boolean {
     if (step === Step.LLVMBitCodeGenerationStepReport) {
       return project[step].messages &&
-      project[step].messages.includes('Wrote LLVM bitcode file')
+        project[step].messages.includes('Wrote LLVM bitcode file')
     }
 
     if (step === Step.SymbolicExecutionStepReport) {
       return project[step].messages &&
-      project[step].messages.includes('???')
+        project[step].messages.includes('KLEE: done: generated tests =')
     }
 
     throw new UnexpectedStep(`Sorry, step ${step} is unexpected.`)

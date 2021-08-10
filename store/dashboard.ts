@@ -57,6 +57,36 @@ export default class Dashboard extends VuexModule {
       .map(id => indexedProjects[id])
   }
 
+  @Mutation
+  public resetDashboardStore (): void {
+    if (
+      typeof this.projects === 'undefined' ||
+      !this.projects
+    ) {
+      return
+    }
+
+    const projects = Object.keys(this.projects).map((id: any) => {
+      const project = this.projects[id]
+
+      project.llvmBitcodeGenerationStepStarted = false
+      project.llvmBitcodeGenerationStepProgress = {}
+      project.llvmBitcodeGenerationStepReport = {}
+      project.llvmBitcodeGenerationStepDone = false
+
+      project.symbolicExecutionStepStarted = false
+      project.symbolicExecutionStepProgress = {}
+      project.symbolicExecutionStepReport = {}
+      project.symbolicExecutionStepDone = false
+
+      return {
+        ...project
+      }
+    })
+
+    this.projects = [...projects]
+  }
+
   @Action
   public async uploadSource ({ name, source, onSuccess }: {name: string, source: string, onSuccess: () => void}) {
     const { baseUrl, routes } = this.routingParams

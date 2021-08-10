@@ -48,9 +48,9 @@ export default class Homepage extends Vue {
 
   pollingLlvmBitcodeGenerationProgress?: ReturnType<typeof setInterval>
 
-  pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
-
   pollingLlvmBitcodeGenerationReport?: ReturnType<typeof setInterval>
+
+  pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
 
   pollingSymbolicExecutionReport?: ReturnType<typeof setInterval>
 
@@ -78,6 +78,15 @@ export default class Homepage extends Vue {
   @Dashboard.Action
   public pollSymbolicExecutionReport!: (project: Project) => void
 
+  @Dashboard.Mutation
+  public resetDashboardStore!: () => void
+
+  resetVerificationSteps () {
+    this.resetDashboardStore()
+    this.$refs.editor.setProjectId({ projectId: '' })
+    this.enableSourceUpload()
+  }
+
   destroyed () {
     EventBus.$off(VerificationEvents.sourceUploaded)
     EventBus.$off(VerificationEvents.llvmBitcodeGenerationStarted)
@@ -103,11 +112,11 @@ export default class Homepage extends Vue {
     if (this.pollingLlvmBitcodeGenerationProgress) {
       clearInterval(this.pollingLlvmBitcodeGenerationProgress)
     }
-    if (this.pollingSymbolicExecutionProgress) {
-      clearInterval(this.pollingSymbolicExecutionProgress)
-    }
     if (this.pollingLlvmBitcodeGenerationReport) {
       clearInterval(this.pollingLlvmBitcodeGenerationReport)
+    }
+    if (this.pollingSymbolicExecutionProgress) {
+      clearInterval(this.pollingSymbolicExecutionProgress)
     }
     if (this.pollingSymbolicExecutionReport) {
       clearInterval(this.pollingSymbolicExecutionReport)
@@ -116,6 +125,10 @@ export default class Homepage extends Vue {
 
   canUploadSource (): boolean {
     return this.enabledSourceUpload
+  }
+
+  enableSourceUpload (): void {
+    this.enabledSourceUpload = true
   }
 
   disableSourceUpload (): void {
@@ -160,7 +173,7 @@ export default class Homepage extends Vue {
   startPollingLlvmBitcodeGenerationReport () {
     const step: VerificationStep = Step.LLVMBitCodeGenerationStepReport
 
-    this.pollingSymbolicExecutionReport = setInterval(() => {
+    this.pollingLlvmBitcodeGenerationReport = setInterval(() => {
       let project: Project
 
       if (!this.canPollLlvmBitcodeGenerationReport()) {
@@ -175,8 +188,8 @@ export default class Homepage extends Vue {
         }
 
         if (this.$refs.steps.isVerificationStepSuccessful(project, step)) {
-          if (this.pollingSymbolicExecutionReport) {
-            clearInterval(this.pollingSymbolicExecutionReport)
+          if (this.pollingLlvmBitcodeGenerationReport) {
+            clearInterval(this.pollingLlvmBitcodeGenerationReport)
           }
           return
         }
@@ -189,8 +202,8 @@ export default class Homepage extends Vue {
             'index.vue',
             { step }
           )
-        } else if (this.pollingSymbolicExecutionReport) {
-          clearInterval(this.pollingSymbolicExecutionReport)
+        } else if (this.pollingLlvmBitcodeGenerationReport) {
+          clearInterval(this.pollingLlvmBitcodeGenerationReport)
         }
       }
     }, 1000)
@@ -241,10 +254,10 @@ export default class Homepage extends Vue {
         project = this.projectById(this.$refs.editor.getProjectId())
 
         if (
-          // Early return when LLVM bitcode has not yet been generated
-          // and symbolic execution has not started
-          project.llvmBitcodeGenerationStepStarted &&
-          !project.llvmBitcodeGenerationStepDone &&
+          // Early return when LLVM bitcode generation has not yet been started
+          // nor it is done
+          !project.llvmBitcodeGenerationStepStarted ||
+          !project.llvmBitcodeGenerationStepDone ||
           !project.symbolicExecutionStepStarted
         ) {
           return
@@ -253,6 +266,7 @@ export default class Homepage extends Vue {
         if (this.$refs.steps.isVerificationStepSuccessful(project, step)) {
           if (this.pollingSymbolicExecutionReport) {
             clearInterval(this.pollingSymbolicExecutionReport)
+            this.resetVerificationSteps()
           }
           return
         }
@@ -267,6 +281,7 @@ export default class Homepage extends Vue {
           )
         } else if (this.pollingSymbolicExecutionReport) {
           clearInterval(this.pollingSymbolicExecutionReport)
+          this.resetVerificationSteps()
         }
       }
     }, 1000)
@@ -305,7 +320,7 @@ export default class Homepage extends Vue {
     }
 
     if (this.$refs.editor.getProjectId().length === 0) {
-      return true
+      return false
     }
 
     const project = this.projectById(this.$refs.editor.getProjectId())
@@ -314,9 +329,7 @@ export default class Homepage extends Vue {
       return false
     }
 
-    const step: VerificationStep = Step.LLVMBitCodeGenerationStepReport
-
-    return !this.$refs.steps.isVerificationStepSuccessful(project, step)
+    return !project.llvmBitcodeGenerationStepStarted
   }
 
   canRunSymbolicExecution () {
