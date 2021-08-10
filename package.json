@@ -6,7 +6,7 @@
     "dev": "make development-server",
     "build": "make build",
     "start": "make start",
-    "lint": "eslint --ext .ts,.js,.vue ."
+    "lint": "eslint --fix --ext .ts,.js,.vue ."
   },
   "dependencies": {
     "@nuxt/typescript-runtime": "^2.1.0",
@@ -17,8 +17,10 @@
     "nuxt-lazysizes": "^1.4.0",
     "nuxt-property-decorator": "^2.9.1",
     "prismjs": "^1.24.1",
+    "vue-notification": "^1.3.20",
     "vue-prism-editor": "^1.2.2",
-    "vue-property-decorator": "^9.1.2"
+    "vue-property-decorator": "^9.1.2",
+    "vuex-persist": "^3.1.3"
   },
   "devDependencies": {
     "@nuxt/types": "^2.15.7",

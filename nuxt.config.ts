@@ -70,6 +70,8 @@ const config: NuxtConfig = {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    '~/plugins/vue-notification.ts',
+    { src: '~/plugins/vuex-persist', ssr: false }
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -139,7 +141,8 @@ const config: NuxtConfig = {
   build: {
     babel: {
       plugins: [['@babel/plugin-proposal-private-property-in-object', { loose: true }]]
-    }
+    },
+    transpile: ['vue-notification']
   },
 
   typescript: {
