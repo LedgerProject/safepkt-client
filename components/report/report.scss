@@ -1,0 +1,13 @@
+
+.report {
+  display: flex;
+  content: "";
+  margin: auto;
+  margin-top: 16px;
+  width: var(--max-width);
+
+  &__content {
+    min-height: 250px;
+    width: 100%;
+  }
+}

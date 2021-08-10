@@ -9,6 +9,7 @@
       :can-generate-llvm-bitcode="canGenerateLlvmBitcode()"
       :can-run-symbolic-execution="canRunSymbolicExecution()"
     />
+    <Report :content="verificationStepReport" />
     <UploadedProjects />
     <notifications position="bottom right" />
   </div>
@@ -22,6 +23,7 @@ import { Component, Vue, namespace } from 'nuxt-property-decorator'
 import SharedState from '../modules/shared-state'
 import Editor from '~/components/editor/editor.vue'
 import Head from '~/components/header/header.vue'
+import Report from '~/components/report/report.vue'
 import UploadedProjects from '~/components/uploaded-projects/uploaded-projects.vue'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import EventBus from '~/modules/event-bus'
@@ -34,7 +36,7 @@ const Dashboard = namespace('dashboard')
 class ProjectNotFound extends Error {}
 
 @Component({
-  components: { Editor, Head, UploadedProjects, VerificationSteps }
+  components: { Editor, Head, Report, UploadedProjects, VerificationSteps }
 })
 export default class Homepage extends Vue {
   logger = new SharedState.Logger()
@@ -53,6 +55,9 @@ export default class Homepage extends Vue {
   pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
 
   pollingSymbolicExecutionReport?: ReturnType<typeof setInterval>
+
+  @Dashboard.Getter
+  public verificationStepReport!: string;
 
   @Dashboard.Getter
   public projectByIdGetter!: (projectId: string) => Project|undefined;
