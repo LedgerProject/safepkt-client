@@ -1,9 +1,10 @@
 import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
 import { Project } from '~/types/project'
-import Config from '~/config'
+import Config, { HttpMethod, Routes } from '~/config'
 import EventBus from '~/modules/event-bus'
 import { EditorEvents } from '~/modules/events'
+import { VerificationStepProgress } from '~/components/verification-steps/verification-steps-progress'
 
 @Module({
   name: 'dashboard',
@@ -12,6 +13,35 @@ import { EditorEvents } from '~/modules/events'
 })
 export default class Dashboard extends VuexModule {
     projects: Project[] = []
+
+    get routingParams (): {baseUrl: string, routes: Routes} {
+      return {
+        baseUrl: Config.getBaseURL(),
+        routes: Config.getRoutes()
+      }
+    }
+
+    get getFetchRequestInit (): (method: HttpMethod, body: BodyInit|null) => RequestInit {
+      return (method: HttpMethod, body: BodyInit|null = null) => {
+        const requestInit: RequestInit = {
+          method,
+          mode: 'cors',
+          cache: 'no-cache',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          redirect: 'follow',
+          referrerPolicy: 'no-referrer'
+        }
+
+        if (body !== null) {
+          requestInit.body = body
+        }
+
+        return requestInit
+      }
+    }
 
     @Mutation
     addProject (project: Project): void {
@@ -28,26 +58,14 @@ export default class Dashboard extends VuexModule {
     }
 
     @Action
-    public async uploadSource ({ name, source }: {name: string, source: string}) {
-      const baseUrl = Config.getBaseURL()
-      const routes = Config.getRoutes()
-      const method = `${routes.uploadSource.method}`
+    public async uploadSource ({ name, source, onSuccess }: {name: string, source: string, onSuccess: () => void}) {
+      const { baseUrl, routes } = this.routingParams
+
       const url = `${baseUrl}${routes.uploadSource.url}`
+      const method: HttpMethod = routes.uploadSource.method
+      const body: BodyInit = JSON.stringify({ source })
 
-      const body = JSON.stringify({ source })
-
-      const response = await fetch(url, {
-        method,
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body
-      })
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method, body))
 
       const json = await response.json()
 
@@ -76,32 +94,30 @@ export default class Dashboard extends VuexModule {
         id: json.project_id,
         name,
         source,
-        llvmBitcodeGenerationStarted: false,
-        symbolicExecutionStarted: false
+        llvmBitcodeGenerationStepStarted: false,
+        llvmBitcodeGenerationStepReport: {},
+        llvmBitcodeGenerationStepProgress: {},
+        llvmBitcodeGenerationStepDone: false,
+        symbolicExecutionStepStarted: false,
+        symbolicExecutionStepReport: {},
+        symbolicExecutionStepProgress: {},
+        symbolicExecutionStepDone: false
       }
 
       this.context.commit('addProject', project)
+
+      onSuccess()
     }
 
     @Action
     public async generateLlvmBitcode (project: Project) {
-      const baseUrl = Config.getBaseURL()
-      const routes = Config.getRoutes()
-      const method = `${routes.startLLVMBitcodeGeneration.method}`
+      const { baseUrl, routes } = this.routingParams
+
       const url = `${baseUrl}${routes.startLLVMBitcodeGeneration.url}`
         .replace('{{ projectId }}', project.id)
+      const method: HttpMethod = routes.startLLVMBitcodeGeneration.method
 
-      const response = await fetch(url, {
-        method,
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer'
-      })
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
 
       const json = await response.json()
 
@@ -120,13 +136,71 @@ export default class Dashboard extends VuexModule {
 
       Vue.notify({
         title: 'Success',
-        text: `The LLVM bitcode was successfully generated for project having id ${project.id}.`,
+        text: [
+          `The LLVM bitcode was successfully generated for project having id ${project.id}:`,
+          json.message
+        ].join('\n'),
         type: 'success'
       })
 
       const projectState: Project = {
         ...project,
-        llvmBitcodeGenerationStarted: true
+        llvmBitcodeGenerationStepStarted: true
+      }
+
+      this.context.commit('addProject', projectState)
+    }
+
+    @Action
+    public async pollLlvmBitcodeGenerationProgress (project: Project) {
+      const { baseUrl, routes } = this.routingParams
+
+      const url = `${baseUrl}${routes.getLLVMBitcodeGenerationProgress.url}`
+        .replace('{{ projectId }}', project.id)
+      const method: HttpMethod = routes.getLLVMBitcodeGenerationProgress.method
+
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+
+      const json = await response.json()
+
+      if (
+        typeof json.message === 'undefined' ||
+          typeof json.error !== 'undefined'
+      ) {
+        return
+      }
+
+      const projectState: Project = {
+        ...project,
+        llvmBitcodeGenerationStepProgress: json,
+        llvmBitcodeGenerationStepDone: json.raw_status === VerificationStepProgress.completed
+      }
+
+      this.context.commit('addProject', projectState)
+    }
+
+    @Action
+    public async pollLlvmBitcodeGenerationReport (project: Project) {
+      const { baseUrl, routes } = this.routingParams
+
+      const url = `${baseUrl}${routes.getLLVMBitcodeGenerationReport.url}`
+        .replace('{{ projectId }}', project.id)
+      const method: HttpMethod = routes.getLLVMBitcodeGenerationReport.method
+
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+
+      const json = await response.json()
+
+      if (
+        typeof json.messages === 'undefined' ||
+          typeof json.error !== 'undefined'
+      ) {
+        return
+      }
+
+      const projectState: Project = {
+        ...project,
+        llvmBitcodeGenerationStepReport: json
       }
 
       this.context.commit('addProject', projectState)
@@ -134,23 +208,13 @@ export default class Dashboard extends VuexModule {
 
     @Action
     public async runSymbolicExecution (project: Project) {
-      const baseUrl = Config.getBaseURL()
-      const routes = Config.getRoutes()
-      const method = `${routes.startSymbolicExecution.method}`
+      const { baseUrl, routes }: { baseUrl: string, routes: Routes } = this.routingParams
+
       const url = `${baseUrl}${routes.startSymbolicExecution.url}`
         .replace('{{ projectId }}', project.id)
+      const method: HttpMethod = routes.startSymbolicExecution.method
 
-      const response = await fetch(url, {
-        method,
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer'
-      })
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
 
       const json = await response.json()
 
@@ -169,16 +233,27 @@ export default class Dashboard extends VuexModule {
 
       Vue.notify({
         title: 'Success',
-        text: `The symbolic execution was successful for project having id ${project.id}.`,
+        text: [
+          `The symbolic execution was successful for project having id ${project.id}.`,
+          json.message
+        ].join('\n'),
         type: 'success'
       })
 
       const projectState: Project = {
         ...project,
-        symbolicExecutionStarted: true
+        symbolicExecutionStepStarted: true
       }
 
       this.context.commit('addProject', projectState)
+    }
+
+    @Action
+    public async pollSymbolicExecutionProgress (project: Project) {
+    }
+
+    @Action
+    public async pollSymbolicExecutionReport (project: Project) {
     }
 
     public get allProjects (): Project[] {

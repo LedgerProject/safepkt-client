@@ -47,9 +47,9 @@ fn main() {
   components: { PrismEditor }
 })
 export default class Editor extends Vue {
-  source!: string = defaultSourceSnippet
-  projectName!: string = 'KLEE :: multiplication demo '
-  projectId!: string = ''
+  source: string = defaultSourceSnippet
+  projectName: string = 'KLEE :: multiplication demo '
+  projectId: string = ''
 
   created () {
     EventBus.$off(EditorEvents.projectIdentified)

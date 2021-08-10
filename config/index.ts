@@ -44,8 +44,22 @@ const getHostParams = (environmentProvider: EnvProvider) => {
   }
 }
 
+type METHOD_GET = 'GET'
+type METHOD_POST = 'POST'
+
+type HttpMethod = METHOD_GET|METHOD_POST
+
+class methods {
+  static METHOD_GET: HttpMethod = 'GET'
+  static METHOD_POST: HttpMethod = 'POST'
+}
+
+export {
+  HttpMethod
+}
+
 type Route = {
-  method: string,
+  method: HttpMethod,
   url: string,
   params: {[key: string]: StringConstructor},
 }
@@ -61,53 +75,50 @@ type Api = {
   routes: Routes
 }
 
-const METHOD_GET = 'GET'
-const METHOD_POST = 'POST'
-
 const api: Api = {
   routes: {
     uploadSource: {
-      method: METHOD_POST,
+      method: methods.METHOD_POST,
       url: '/source',
       params: {}
     },
     startLLVMBitcodeGeneration: {
-      method: METHOD_POST,
+      method: methods.METHOD_POST,
       url: '/llvm-bitcode-generation/{{ projectId }}',
       params: {
         projectId: String
       }
     },
     getLLVMBitcodeGenerationProgress: {
-      method: METHOD_GET,
+      method: methods.METHOD_GET,
       url: '/llvm-bitcode-generation/{{ projectId }}/progress',
       params: {
         projectId: String
       }
     },
     getLLVMBitcodeGenerationReport: {
-      method: METHOD_GET,
+      method: methods.METHOD_GET,
       url: '/llvm-bitcode-generation/{{ projectId }}/report',
       params: {
         projectId: String
       }
     },
     startSymbolicExecution: {
-      method: METHOD_POST,
+      method: methods.METHOD_POST,
       url: '/symbolic-execution/{{ projectId }}',
       params: {
         projectId: String
       }
     },
     getSymbolicExecutionProgress: {
-      method: METHOD_GET,
+      method: methods.METHOD_GET,
       url: '/symbolic-execution/{{ projectId }}/progress',
       params: {
         projectId: String
       }
     },
     getSymbolicExecutionReport: {
-      method: METHOD_GET,
+      method: methods.METHOD_GET,
       url: '/symbolic-execution/{{ projectId }}/report',
       params: {
         projectId: String

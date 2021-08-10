@@ -1,6 +1,10 @@
 <template>
   <div class="verification-steps">
-    <button @click="uploadSource">
+    <button
+      :class="uploadSourceButtonClasses()"
+      :disabled="!canUploadSource"
+      @click="uploadSource"
+    >
       Upload source code
     </button>
     <button
@@ -24,9 +28,18 @@
 import { Component, Prop, Vue } from 'nuxt-property-decorator'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
+import { VerificationStep } from '~/types/verification-steps'
+import { VerificationStepProgress as Progress } from '~/components/verification-steps/verification-steps-progress'
+import { Project } from '~/types/project'
 
 @Component
 export default class VerificationSteps extends Vue {
+  @Prop({
+    type: Boolean,
+    default: true
+  })
+  canUploadSource!: boolean;
+
   @Prop({
     type: Boolean,
     default: false
@@ -51,6 +64,12 @@ export default class VerificationSteps extends Vue {
     EventBus.$emit(VerificationEvents.symbolicExecutionStarted)
   }
 
+  uploadSourceButtonClasses () {
+    if (!this.canUploadSource) {
+      return this.getDefaultDisabledButtonClass()
+    }
+  }
+
   generateLlvmBitcodeButtonClasses () {
     if (!this.canGenerateLlvmBitcode) {
       return this.getDefaultDisabledButtonClass()
@@ -67,6 +86,16 @@ export default class VerificationSteps extends Vue {
     return {
       'verification-steps__disabled': true
     }
+  }
+
+  isVerificationStepProgressCompleted (project: Project, step: VerificationStep): boolean {
+    return project[step].raw_status &&
+    project[step].raw_status === Progress.completed
+  }
+
+  isVerificationStepSuccessful (project: Project, step: VerificationStep): boolean {
+    return project[step].messages &&
+    project[step].messages.includes('Wrote LLVM bitcode file')
   }
 }
 </script>
