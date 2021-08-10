@@ -86,8 +86,8 @@ export default class Homepage extends Vue {
 
   created () {
     this.startPollingLlvmBitcodeGenerationProgress()
-    this.startPollingSymbolicExecutionProgress()
     this.startPollingLlvmBitcodeGenerationReport()
+    this.startPollingSymbolicExecutionProgress()
     this.startPollingSymbolicExecutionReport()
 
     EventBus.$off(VerificationEvents.sourceUploaded)
@@ -240,7 +240,13 @@ export default class Homepage extends Vue {
       try {
         project = this.projectById(this.$refs.editor.getProjectId())
 
-        if (!project.symbolicExecutionStepStarted) {
+        if (
+          // Early return when LLVM bitcode has not yet been generated
+          // and symbolic execution has not started
+          project.llvmBitcodeGenerationStepStarted &&
+          !project.llvmBitcodeGenerationStepDone &&
+          !project.symbolicExecutionStepStarted
+        ) {
           return
         }
 
