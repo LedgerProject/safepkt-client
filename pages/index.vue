@@ -58,7 +58,7 @@ export default class Homepage extends Vue {
   public projectByIdGetter!: (projectId: string) => Project|undefined;
 
   @Dashboard.Action
-  public uploadSource!: ({ name, source }: {name: string, source: string}) => void
+  public uploadSource!: ({ name, source, onSuccess }: {name: string, source: string, onSuccess: () => void}) => void
 
   @Dashboard.Action
   public generateLlvmBitcode!: (project: Project) => void
@@ -150,6 +150,8 @@ export default class Homepage extends Vue {
             'index.vue',
             { step }
           )
+        } else if (this.pollingLlvmBitcodeGenerationProgress) {
+          clearInterval(this.pollingLlvmBitcodeGenerationProgress)
         }
       }
     }, 1000)
@@ -158,7 +160,7 @@ export default class Homepage extends Vue {
   startPollingLlvmBitcodeGenerationReport () {
     const step: VerificationStep = Step.LLVMBitCodeGenerationStepReport
 
-    this.pollingSymbolicExecutionProgress = setInterval(() => {
+    this.pollingSymbolicExecutionReport = setInterval(() => {
       let project: Project
 
       if (!this.canPollLlvmBitcodeGenerationReport()) {
@@ -173,8 +175,8 @@ export default class Homepage extends Vue {
         }
 
         if (this.$refs.steps.isVerificationStepSuccessful(project, step)) {
-          if (this.pollingSymbolicExecutionProgress) {
-            clearInterval(this.pollingSymbolicExecutionProgress)
+          if (this.pollingSymbolicExecutionReport) {
+            clearInterval(this.pollingSymbolicExecutionReport)
           }
           return
         }
@@ -187,6 +189,8 @@ export default class Homepage extends Vue {
             'index.vue',
             { step }
           )
+        } else if (this.pollingSymbolicExecutionReport) {
+          clearInterval(this.pollingSymbolicExecutionReport)
         }
       }
     }, 1000)
@@ -200,6 +204,10 @@ export default class Homepage extends Vue {
 
       try {
         project = this.projectById(this.$refs.editor.getProjectId())
+
+        if (!project.symbolicExecutionStepStarted) {
+          return
+        }
 
         if (this.$refs.steps.isVerificationStepProgressCompleted(project, step)) {
           if (this.pollingSymbolicExecutionProgress) {
@@ -216,6 +224,8 @@ export default class Homepage extends Vue {
             'index.vue',
             { step }
           )
+        } else if (this.pollingSymbolicExecutionProgress) {
+          clearInterval(this.pollingSymbolicExecutionProgress)
         }
       }
     }, 1000)
@@ -224,15 +234,19 @@ export default class Homepage extends Vue {
   startPollingSymbolicExecutionReport () {
     const step: VerificationStep = Step.SymbolicExecutionStepReport
 
-    this.pollingSymbolicExecutionProgress = setInterval(() => {
+    this.pollingSymbolicExecutionReport = setInterval(() => {
       let project: Project
 
       try {
         project = this.projectById(this.$refs.editor.getProjectId())
 
+        if (!project.symbolicExecutionStepStarted) {
+          return
+        }
+
         if (this.$refs.steps.isVerificationStepSuccessful(project, step)) {
-          if (this.pollingSymbolicExecutionProgress) {
-            clearInterval(this.pollingSymbolicExecutionProgress)
+          if (this.pollingSymbolicExecutionReport) {
+            clearInterval(this.pollingSymbolicExecutionReport)
           }
           return
         }
@@ -245,6 +259,8 @@ export default class Homepage extends Vue {
             'index.vue',
             { step }
           )
+        } else if (this.pollingSymbolicExecutionReport) {
+          clearInterval(this.pollingSymbolicExecutionReport)
         }
       }
     }, 1000)
@@ -315,7 +331,9 @@ export default class Homepage extends Vue {
     const step: VerificationStep = Step.LLVMBitCodeGenerationStepReport
 
     return project.llvmBitcodeGenerationStepDone &&
-      this.$refs.steps.isVerificationStepSuccessful(project, step)
+      this.$refs.steps.isVerificationStepSuccessful(project, step) &&
+      // No symbolic execution has started
+      !project.symbolicExecutionStepStarted
   }
 
   async tryToUploadSource () {

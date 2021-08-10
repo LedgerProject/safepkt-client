@@ -29,8 +29,10 @@ import { Component, Prop, Vue } from 'nuxt-property-decorator'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import { VerificationStep } from '~/types/verification-steps'
-import { VerificationStepProgress as Progress } from '~/components/verification-steps/verification-steps-progress'
+import { VerificationStep as Step, VerificationStepProgress as Progress } from '~/components/verification-steps/verification-steps-progress'
 import { Project } from '~/types/project'
+
+class UnexpectedStep extends Error {}
 
 @Component
 export default class VerificationSteps extends Vue {
@@ -94,8 +96,17 @@ export default class VerificationSteps extends Vue {
   }
 
   isVerificationStepSuccessful (project: Project, step: VerificationStep): boolean {
-    return project[step].messages &&
-    project[step].messages.includes('Wrote LLVM bitcode file')
+    if (step === Step.LLVMBitCodeGenerationStepReport) {
+      return project[step].messages &&
+      project[step].messages.includes('Wrote LLVM bitcode file')
+    }
+
+    if (step === Step.SymbolicExecutionStepReport) {
+      return project[step].messages &&
+      project[step].messages.includes('???')
+    }
+
+    throw new UnexpectedStep(`Sorry, step ${step} is unexpected.`)
   }
 }
 </script>
