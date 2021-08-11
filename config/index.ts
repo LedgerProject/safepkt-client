@@ -9,6 +9,7 @@ const getHostParams = (environmentProvider: EnvProvider) => {
   if (environment.productionMode) {
     scheme = 'https://'
     host = process.env.API_HOST
+    port = ''
 
     if (
       typeof process.env.API_PORT !== 'undefined' &&
