@@ -4,7 +4,8 @@ import { Project } from '~/types/project'
 import Config, { HttpMethod, Routes } from '~/config'
 import EventBus from '~/modules/event-bus'
 import { EditorEvents } from '~/modules/events'
-import { VerificationStepProgress } from '~/components/verification-steps/verification-steps-progress'
+import { VerificationStep as VerificationStepMod, VerificationStepProgress } from '~/modules/verification-steps'
+import { VerificationStep } from '~/types/verification-steps'
 
 @Module({
   name: 'dashboard',
@@ -13,6 +14,7 @@ import { VerificationStepProgress } from '~/components/verification-steps/verifi
 })
 export default class Dashboard extends VuexModule {
   projects: Project[] = []
+  step: VerificationStep = VerificationStepMod.uploadSourceStep
 
   get routingParams (): {baseUrl: string, routes: Routes} {
     return {

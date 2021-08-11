@@ -29,8 +29,8 @@ import VerificationSteps from '~/components/verification-steps/verification-step
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import { Project } from '~/types/project'
-import { VerificationStep as Step } from '~/components/verification-steps/verification-steps-progress'
-import { VerificationStep } from '~/types/verification-steps'
+import { PollingTarget } from '~/modules/verification-steps'
+import { VerificationStepPollingTarget } from '~/types/verification-steps'
 const Dashboard = namespace('dashboard')
 
 class ProjectNotFound extends Error {}
@@ -57,7 +57,7 @@ export default class Homepage extends Vue {
   pollingSymbolicExecutionReport?: ReturnType<typeof setInterval>
 
   @Dashboard.Getter
-  public verificationStepReport!: string;
+  public verificationStepReport!: string = '';
 
   @Dashboard.Getter
   public projectByIdGetter!: (projectId: string) => Project|undefined;
@@ -141,7 +141,7 @@ export default class Homepage extends Vue {
   }
 
   startPollingLlvmBitcodeGenerationProgress () {
-    const step: VerificationStep = Step.LLVMBitCodeGenerationStepProgress
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepProgress
 
     this.pollingLlvmBitcodeGenerationProgress = setInterval(() => {
       let project: Project
@@ -153,7 +153,7 @@ export default class Homepage extends Vue {
           return
         }
 
-        if (this.$refs.steps.isVerificationStepProgressCompleted(project, step)) {
+        if (this.$refs.steps.isVerificationStepProgressCompleted(project, pollingTarget)) {
           if (this.pollingLlvmBitcodeGenerationProgress) {
             clearInterval(this.pollingLlvmBitcodeGenerationProgress)
           }
@@ -166,7 +166,7 @@ export default class Homepage extends Vue {
           this.logger.error(
             e.message,
             'index.vue',
-            { step }
+            { pollingTarget }
           )
         } else if (this.pollingLlvmBitcodeGenerationProgress) {
           clearInterval(this.pollingLlvmBitcodeGenerationProgress)
@@ -176,7 +176,7 @@ export default class Homepage extends Vue {
   }
 
   startPollingLlvmBitcodeGenerationReport () {
-    const step: VerificationStep = Step.LLVMBitCodeGenerationStepReport
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepReport
 
     this.pollingLlvmBitcodeGenerationReport = setInterval(() => {
       let project: Project
@@ -192,7 +192,7 @@ export default class Homepage extends Vue {
           return
         }
 
-        if (this.$refs.steps.isVerificationStepSuccessful(project, step)) {
+        if (this.$refs.steps.isVerificationStepSuccessful(project, pollingTarget)) {
           if (this.pollingLlvmBitcodeGenerationReport) {
             clearInterval(this.pollingLlvmBitcodeGenerationReport)
           }
@@ -205,7 +205,7 @@ export default class Homepage extends Vue {
           this.logger.error(
             e.message,
             'index.vue',
-            { step }
+            { pollingTarget }
           )
         } else if (this.pollingLlvmBitcodeGenerationReport) {
           clearInterval(this.pollingLlvmBitcodeGenerationReport)
@@ -215,7 +215,7 @@ export default class Homepage extends Vue {
   }
 
   startPollingSymbolicExecutionProgress () {
-    const step: VerificationStep = Step.SymbolicExecutionStepProgress
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.SymbolicExecutionStepProgress
 
     this.pollingSymbolicExecutionProgress = setInterval(() => {
       let project: Project
@@ -227,7 +227,7 @@ export default class Homepage extends Vue {
           return
         }
 
-        if (this.$refs.steps.isVerificationStepProgressCompleted(project, step)) {
+        if (this.$refs.steps.isVerificationStepProgressCompleted(project, pollingTarget)) {
           if (this.pollingSymbolicExecutionProgress) {
             clearInterval(this.pollingSymbolicExecutionProgress)
           }
@@ -240,7 +240,7 @@ export default class Homepage extends Vue {
           this.logger.error(
             e.message,
             'index.vue',
-            { step }
+            { pollingTarget }
           )
         } else if (this.pollingSymbolicExecutionProgress) {
           clearInterval(this.pollingSymbolicExecutionProgress)
@@ -250,7 +250,7 @@ export default class Homepage extends Vue {
   }
 
   startPollingSymbolicExecutionReport () {
-    const step: VerificationStep = Step.SymbolicExecutionStepReport
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.SymbolicExecutionStepReport
 
     this.pollingSymbolicExecutionReport = setInterval(() => {
       let project: Project
@@ -268,7 +268,7 @@ export default class Homepage extends Vue {
           return
         }
 
-        if (this.$refs.steps.isVerificationStepSuccessful(project, step)) {
+        if (this.$refs.steps.isVerificationStepSuccessful(project, pollingTarget)) {
           if (this.pollingSymbolicExecutionReport) {
             clearInterval(this.pollingSymbolicExecutionReport)
             this.resetVerificationSteps()
@@ -282,7 +282,7 @@ export default class Homepage extends Vue {
           this.logger.error(
             e.message,
             'index.vue',
-            { step }
+            { pollingTarget }
           )
         } else if (this.pollingSymbolicExecutionReport) {
           clearInterval(this.pollingSymbolicExecutionReport)
@@ -352,10 +352,10 @@ export default class Homepage extends Vue {
       return false
     }
 
-    const step: VerificationStep = Step.LLVMBitCodeGenerationStepReport
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepReport
 
     return project.llvmBitcodeGenerationStepDone &&
-      this.$refs.steps.isVerificationStepSuccessful(project, step) &&
+      this.$refs.steps.isVerificationStepSuccessful(project, pollingTarget) &&
       // No symbolic execution has started
       !project.symbolicExecutionStepStarted
   }

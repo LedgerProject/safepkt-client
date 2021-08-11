@@ -28,8 +28,8 @@
 import { Component, Prop, Vue } from 'nuxt-property-decorator'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
-import { VerificationStep } from '~/types/verification-steps'
-import { VerificationStep as Step, VerificationStepProgress as Progress } from '~/components/verification-steps/verification-steps-progress'
+import { VerificationStepPollingTarget } from '~/types/verification-steps'
+import { PollingTarget, VerificationStepProgress as Progress } from '~/modules/verification-steps'
 import { Project } from '~/types/project'
 
 class UnexpectedStep extends Error {}
@@ -90,23 +90,23 @@ export default class VerificationSteps extends Vue {
     }
   }
 
-  isVerificationStepProgressCompleted (project: Project, step: VerificationStep): boolean {
-    return project[step].raw_status &&
-    project[step].raw_status === Progress.completed
+  isVerificationStepProgressCompleted (project: Project, pollingTarget: VerificationStepPollingTarget): boolean {
+    return project[pollingTarget].raw_status &&
+    project[pollingTarget].raw_status === Progress.completed
   }
 
-  isVerificationStepSuccessful (project: Project, step: VerificationStep): boolean {
-    if (step === Step.LLVMBitCodeGenerationStepReport) {
-      return project[step].messages &&
-        project[step].messages.includes('Wrote LLVM bitcode file')
+  isVerificationStepSuccessful (project: Project, pollingTarget: VerificationStepPollingTarget): boolean {
+    if (pollingTarget === PollingTarget.LLVMBitCodeGenerationStepReport) {
+      return project[pollingTarget].messages &&
+        project[pollingTarget].messages.includes('Wrote LLVM bitcode file')
     }
 
-    if (step === Step.SymbolicExecutionStepReport) {
-      return project[step].messages &&
-        project[step].messages.includes('KLEE: done: generated tests =')
+    if (pollingTarget === PollingTarget.SymbolicExecutionStepReport) {
+      return project[pollingTarget].messages &&
+        project[pollingTarget].messages.includes('KLEE: done: generated tests =')
     }
 
-    throw new UnexpectedStep(`Sorry, step ${step} is unexpected.`)
+    throw new UnexpectedStep(`Sorry, pollingTarget ${pollingTarget} is unexpected.`)
   }
 }
 </script>

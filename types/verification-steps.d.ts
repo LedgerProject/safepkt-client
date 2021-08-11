@@ -1,19 +1,31 @@
 
+type VerificationStepProgressRunning = 'verificationStepProgressRunning'
+type VerificationStepProgressCompleted = 'verificationStepProgressCompleted'
+
+type VerificationStepProgress = VerificationStepProgressRunning|VerificationStepProgressCompleted
+
 type LLVMBitCodeGenerationStepProgress = 'llvmBitcodeGenerationStepProgress'
 type LLVMBitCodeGenerationStepReport = 'llvmBitcodeGenerationStepReport'
 type SymbolicExecutionStepProgress = 'symbolicExecutionStepProgress'
 type SymbolicExecutionStepReport = 'symbolicExecutionStepReport'
 
-type VerificationStep =
+type VerificationStepPollingTarget =
     LLVMBitCodeGenerationStepProgress|
     LLVMBitCodeGenerationStepReport|
     SymbolicExecutionStepProgress|
     SymbolicExecutionStepReport
 
+type UploadSourceStep = 'uploadSourceStep'
+type LLVMBitCodeGenerationStep = 'llvmBitCodeGenerationStep'
+type SymbolicExecutionStep = 'symbolicExecutionStep'
+
+type VerificationStep =
+    UploadSourceStep|
+    LLVMBitCodeGenerationStep|
+    SymbolicExecutionStep
+
 export {
-    LLVMBitCodeGenerationStepProgress,
-    LLVMBitCodeGenerationStepReport,
-    SymbolicExecutionStepProgress,
-    SymbolicExecutionStepReport,
-    VerificationStep
+    VerificationStep,
+    VerificationStepProgress,
+    VerificationStepPollingTarget,
 }
