@@ -15,7 +15,7 @@
       :next-step-available="nextStepAvailable()"
       :title="getReportTitle()"
     />
-    <UploadedProjects />
+    <UploadedProjects v-show="showUploadedProjects" />
     <notifications position="bottom right" />
   </div>
 </template>
@@ -55,6 +55,8 @@ export default class Homepage extends Vue {
   enabledSourceUpload: boolean = true
 
   unlockedResetButton: boolean = false
+
+  showUploadedProjects: boolean = false
 
   $refs!: {
     editor: Editor
