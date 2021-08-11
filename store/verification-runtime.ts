@@ -14,9 +14,15 @@ class InvalidVerificationStep extends Error {}
   stateFactory: true,
   namespaced: true
 })
-export default class VerificationRuntime extends VuexModule {
+export default class VerificationRuntimeStore extends VuexModule {
   projects: Project[] = []
+  errors: Error[] = []
   verificationStep: VerificationStep = VerificationStepMod.uploadSourceStep
+
+  @Mutation
+  pushError ({ error }: {error: Error}) {
+    this.errors.push(error)
+  }
 
   get routingParams (): {baseUrl: string, routes: Routes} {
     return {
@@ -110,48 +116,56 @@ export default class VerificationRuntime extends VuexModule {
     const method: HttpMethod = routes.uploadSource.method
     const body: BodyInit = JSON.stringify({ source })
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method, body))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method, body))
+      const json = await response.json()
 
-    const json = await response.json()
-
-    if (
-      typeof json.project_id === 'undefined' ||
+      if (
+        typeof json.project_id === 'undefined' ||
           !json.project_id
-    ) {
+      ) {
+        Vue.notify({
+          title: 'Warning',
+          text: 'Sorry, the source upload has failed.',
+          type: 'warn'
+        })
+
+        return
+      }
+
       Vue.notify({
-        title: 'Warning',
-        text: 'Sorry, the source upload has failed.',
-        type: 'warn'
+        title: 'Success',
+        text: `The source was successfully uploaded under project id ${json.project_id}.`,
+        type: 'success'
       })
 
-      return
+      EventBus.$emit(EditorEvents.projectIdentified, { projectId: json.project_id })
+
+      const project: Project = {
+        id: json.project_id,
+        name,
+        source,
+        llvmBitcodeGenerationStepStarted: false,
+        llvmBitcodeGenerationStepReport: {},
+        llvmBitcodeGenerationStepProgress: {},
+        llvmBitcodeGenerationStepDone: false,
+        symbolicExecutionStepStarted: false,
+        symbolicExecutionStepReport: {},
+        symbolicExecutionStepProgress: {},
+        symbolicExecutionStepDone: false
+      }
+
+      this.context.commit('addProject', project)
+
+      onSuccess()
+    } catch (e) {
+      this.context.commit('pushError', { error: e })
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to upload some source code.',
+        type: 'error'
+      })
     }
-
-    Vue.notify({
-      title: 'Success',
-      text: `The source was successfully uploaded under project id ${json.project_id}.`,
-      type: 'success'
-    })
-
-    EventBus.$emit(EditorEvents.projectIdentified, { projectId: json.project_id })
-
-    const project: Project = {
-      id: json.project_id,
-      name,
-      source,
-      llvmBitcodeGenerationStepStarted: false,
-      llvmBitcodeGenerationStepReport: {},
-      llvmBitcodeGenerationStepProgress: {},
-      llvmBitcodeGenerationStepDone: false,
-      symbolicExecutionStepStarted: false,
-      symbolicExecutionStepReport: {},
-      symbolicExecutionStepProgress: {},
-      symbolicExecutionStepDone: false
-    }
-
-    this.context.commit('addProject', project)
-
-    onSuccess()
   }
 
   @Action
@@ -162,39 +176,46 @@ export default class VerificationRuntime extends VuexModule {
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.startLLVMBitcodeGeneration.method
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+      const json = await response.json()
 
-    const json = await response.json()
+      if (
+        typeof json.message === 'undefined' ||
+        typeof json.error !== 'undefined'
+      ) {
+        Vue.notify({
+          title: 'Warning',
+          text: `Sorry, the LLVM bitcode generation has failed for project having id ${project.id}.`,
+          type: 'warn'
+        })
 
-    if (
-      typeof json.message === 'undefined' ||
-      typeof json.error !== 'undefined'
-    ) {
+        return
+      }
+
       Vue.notify({
-        title: 'Warning',
-        text: `Sorry, the LLVM bitcode generation has failed for project having id ${project.id}.`,
-        type: 'warn'
+        title: 'Success',
+        text: [
+          `LLVM bitcode generation has been successfully triggered for project having id ${project.id}:`,
+          json.message
+        ].join('\n'),
+        type: 'success'
       })
 
-      return
+      const projectState: Project = {
+        ...project,
+        llvmBitcodeGenerationStepStarted: true
+      }
+
+      this.context.commit('setVerificationStep', VerificationStepMod.llvmBitCodeGenerationStep)
+      this.context.commit('addProject', projectState)
+    } catch (e) {
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to generate LLVM bitcode.',
+        type: 'error'
+      })
     }
-
-    Vue.notify({
-      title: 'Success',
-      text: [
-        `LLVM bitcode generation has been successfully triggered for project having id ${project.id}:`,
-        json.message
-      ].join('\n'),
-      type: 'success'
-    })
-
-    const projectState: Project = {
-      ...project,
-      llvmBitcodeGenerationStepStarted: true
-    }
-
-    this.context.commit('setVerificationStep', VerificationStepMod.llvmBitCodeGenerationStep)
-    this.context.commit('addProject', projectState)
   }
 
   @Action
@@ -205,29 +226,36 @@ export default class VerificationRuntime extends VuexModule {
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getLLVMBitcodeGenerationProgress.method
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+      const json = await response.json()
 
-    const json = await response.json()
+      if (
+        typeof json.message === 'undefined' ||
+          typeof json.error !== 'undefined'
+      ) {
+        return
+      }
 
-    if (
-      typeof json.message === 'undefined' ||
-        typeof json.error !== 'undefined'
-    ) {
-      return
+      const llvmBitcodeGenerationStepDone = json.raw_status === VerificationStepProgress.completed
+
+      const projectState: Project = {
+        ...project,
+        llvmBitcodeGenerationStepProgress: json,
+        llvmBitcodeGenerationStepDone
+      }
+
+      if (llvmBitcodeGenerationStepDone) {
+        this.context.commit('setVerificationStep', VerificationStepMod.symbolicExecutionStep)
+      }
+      this.context.commit('addProject', projectState)
+    } catch (e) {
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to poll the LLVM bitcode generation progress.',
+        type: 'error'
+      })
     }
-
-    const llvmBitcodeGenerationStepDone = json.raw_status === VerificationStepProgress.completed
-
-    const projectState: Project = {
-      ...project,
-      llvmBitcodeGenerationStepProgress: json,
-      llvmBitcodeGenerationStepDone
-    }
-
-    if (llvmBitcodeGenerationStepDone) {
-      this.context.commit('setVerificationStep', VerificationStepMod.symbolicExecutionStep)
-    }
-    this.context.commit('addProject', projectState)
   }
 
   @Action
@@ -238,26 +266,33 @@ export default class VerificationRuntime extends VuexModule {
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getLLVMBitcodeGenerationReport.method
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+      const json = await response.json()
 
-    const json = await response.json()
+      if (
+        typeof json.messages === 'undefined' ||
+          typeof json.error !== 'undefined'
+      ) {
+        return
+      }
 
-    if (
-      typeof json.messages === 'undefined' ||
-        typeof json.error !== 'undefined'
-    ) {
-      return
-    }
+      const projectState: Project = {
+        ...project,
+        llvmBitcodeGenerationStepReport: json
+      }
 
-    const projectState: Project = {
-      ...project,
-      llvmBitcodeGenerationStepReport: json
-    }
+      this.context.commit('addProject', projectState)
 
-    this.context.commit('addProject', projectState)
-
-    if (json.messages.includes('FAILED:')) {
-      EventBus.$emit(VerificationEvents.failedVerificationStep)
+      if (json.messages.includes('FAILED:')) {
+        EventBus.$emit(VerificationEvents.failedVerificationStep)
+      }
+    } catch (e) {
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to poll the LLVM bitcode generation report.',
+        type: 'error'
+      })
     }
   }
 
@@ -269,38 +304,45 @@ export default class VerificationRuntime extends VuexModule {
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.startSymbolicExecution.method
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+      const json = await response.json()
 
-    const json = await response.json()
+      if (
+        typeof json.message === 'undefined' ||
+            !json.message
+      ) {
+        Vue.notify({
+          title: 'Warning',
+          text: `Sorry, the symbolic execution has failed for project having id ${project.id}.`,
+          type: 'warn'
+        })
 
-    if (
-      typeof json.message === 'undefined' ||
-          !json.message
-    ) {
+        return
+      }
+
       Vue.notify({
-        title: 'Warning',
-        text: `Sorry, the symbolic execution has failed for project having id ${project.id}.`,
-        type: 'warn'
+        title: 'Success',
+        text: [
+          `Symbolic execution has been successfully triggered for project having id ${project.id}.`,
+          json.message
+        ].join('\n'),
+        type: 'success'
       })
 
-      return
+      const projectState: Project = {
+        ...project,
+        symbolicExecutionStepStarted: true
+      }
+
+      this.context.commit('addProject', projectState)
+    } catch (e) {
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to run the symbolic execution.',
+        type: 'error'
+      })
     }
-
-    Vue.notify({
-      title: 'Success',
-      text: [
-        `Symbolic execution has been successfully triggered for project having id ${project.id}.`,
-        json.message
-      ].join('\n'),
-      type: 'success'
-    })
-
-    const projectState: Project = {
-      ...project,
-      symbolicExecutionStepStarted: true
-    }
-
-    this.context.commit('addProject', projectState)
   }
 
   @Action
@@ -311,26 +353,33 @@ export default class VerificationRuntime extends VuexModule {
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getSymbolicExecutionProgress.method
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+      const json = await response.json()
 
-    const json = await response.json()
+      if (
+        typeof json.message === 'undefined' ||
+            typeof json.error !== 'undefined'
+      ) {
+        return
+      }
 
-    if (
-      typeof json.message === 'undefined' ||
-          typeof json.error !== 'undefined'
-    ) {
-      return
+      const symbolicExecutionStepDone = json.raw_status === VerificationStepProgress.completed
+
+      const projectState: Project = {
+        ...project,
+        symbolicExecutionStepProgress: json,
+        symbolicExecutionStepDone
+      }
+
+      this.context.commit('addProject', projectState)
+    } catch (e) {
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to poll the symbolic execution progress.',
+        type: 'error'
+      })
     }
-
-    const symbolicExecutionStepDone = json.raw_status === VerificationStepProgress.completed
-
-    const projectState: Project = {
-      ...project,
-      symbolicExecutionStepProgress: json,
-      symbolicExecutionStepDone
-    }
-
-    this.context.commit('addProject', projectState)
   }
 
   @Action
@@ -341,23 +390,30 @@ export default class VerificationRuntime extends VuexModule {
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getSymbolicExecutionReport.method
 
-    const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+    try {
+      const response = await fetch(url, this.context.getters.getFetchRequestInit(method))
+      const json = await response.json()
 
-    const json = await response.json()
+      if (
+        typeof json.messages === 'undefined' ||
+          typeof json.error !== 'undefined'
+      ) {
+        return
+      }
 
-    if (
-      typeof json.messages === 'undefined' ||
-        typeof json.error !== 'undefined'
-    ) {
-      return
+      const projectState: Project = {
+        ...project,
+        symbolicExecutionStepReport: json
+      }
+
+      this.context.commit('addProject', projectState)
+    } catch (e) {
+      Vue.notify({
+        title: 'Oops',
+        text: 'Sorry, something went wrong when trying to poll the symbolic execution report.',
+        type: 'error'
+      })
     }
-
-    const projectState: Project = {
-      ...project,
-      symbolicExecutionStepReport: json
-    }
-
-    this.context.commit('addProject', projectState)
   }
 
   public get allProjects (): Project[] {
