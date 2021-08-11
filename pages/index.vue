@@ -75,7 +75,7 @@ export default class Homepage extends Vue {
   public nextAvailableVerificationStep!: VerificationStep;
 
   @VerificationRuntime.Getter
-  public verificationStepReportGetter: ({ project }: {project: Project}) => string;
+  public verificationStepReportGetter!: ({ project }: {project: Project}) => string;
 
   @VerificationRuntime.Getter
   public projectByIdGetter!: (projectId: string) => Project|undefined;
@@ -193,7 +193,7 @@ export default class Homepage extends Vue {
       this.logger.error(
         e.message,
         'index.vue',
-        { projectId: project.id }
+        { projectId }
       )
 
       return ''
@@ -432,7 +432,7 @@ export default class Homepage extends Vue {
   }
 
   getReportTitle () {
-    let project: Project
+    let project: Project|null = null
 
     if (this.$refs.editor && this.$refs.editor.getProjectId()) {
       project = this.projectById(this.$refs.editor.getProjectId())

@@ -49,6 +49,7 @@ class Logger {
       return
     }
 
+    // eslint-disable-next-line no-console
     console.log(message, file, extra)
   }
 
@@ -59,6 +60,7 @@ class Logger {
       return error
     }
 
+    // eslint-disable-next-line no-console
     console.error(error, file, extra)
 
     return error

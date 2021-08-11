@@ -33,7 +33,7 @@ export default class Report extends Vue {
     type: String,
     required: true
   })
-  title!: title
+  title!: string
 
   getReportClasses () {
     return {
