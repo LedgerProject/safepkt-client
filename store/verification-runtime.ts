@@ -1,13 +1,15 @@
 import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
+import { editorStore } from '~/store'
 import { Project } from '~/types/project'
 import Config, { HttpMethod, Routes } from '~/config'
 import EventBus from '~/modules/event-bus'
-import VerificationEvents, { EditorEvents } from '~/modules/events'
-import { VerificationStep as VerificationStepMod, VerificationStepProgress } from '~/modules/verification-steps'
-import { VerificationStep } from '~/types/verification-steps'
-
-class InvalidVerificationStep extends Error {}
+import VerificationEvents from '~/modules/events'
+import {
+  VerificationStep as VerificationStepMod,
+  VerificationStepProgress
+} from '~/modules/verification-steps'
+import { ProjectNotFound } from '~/mixins/project'
 
 @Module({
   name: 'verification-runtime',
@@ -17,11 +19,44 @@ class InvalidVerificationStep extends Error {}
 export default class VerificationRuntimeStore extends VuexModule {
   projects: Project[] = []
   errors: Error[] = []
-  verificationStep: VerificationStep = VerificationStepMod.uploadSourceStep
 
   @Mutation
   pushError ({ error }: {error: Error}) {
     this.errors.push(error)
+  }
+
+  public get canRunLlvmBitcodeGenerationStep (): () => boolean {
+    return () => {
+      if (!editorStore.isProjectIdValid()) {
+        return false
+      }
+
+      try {
+        const project = this.projectById(editorStore.projectId)
+        return this.context.getters.canGenerateLlvmBitcodeForProject({
+          project
+        })
+      } catch (e) {
+        return false
+      }
+    }
+  }
+
+  public get canGenerateLlvmBitcodeForProject (): ({ project }: {project: Project}) => boolean {
+    return ({ project }: {project: Project}) =>
+      !project.llvmBitcodeGenerationStepStarted
+  }
+
+  /** @throw ProjectNotFound */
+  public get projectById (): (projectId: string) => Project {
+    return (projectId: string) => {
+      const project = this.projectByIdGetter(projectId)
+      if (typeof project === 'undefined') {
+        throw new ProjectNotFound(`Could not find project having id ${projectId}`)
+      }
+
+      return project
+    }
   }
 
   get routingParams (): {baseUrl: string, routes: Routes} {
@@ -68,11 +103,6 @@ export default class VerificationRuntimeStore extends VuexModule {
   }
 
   @Mutation
-  setVerificationStep (step: VerificationStep) {
-    this.verificationStep = step
-  }
-
-  @Mutation
   public resetProjectState (): void {
     if (
       typeof this.projects === 'undefined' ||
@@ -105,7 +135,11 @@ export default class VerificationRuntimeStore extends VuexModule {
   @Action
   public resetVerificationRuntime (): void {
     this.context.commit('resetProjectState')
-    this.context.commit('setVerificationStep', VerificationStepMod.uploadSourceStep)
+    this.context.commit(
+      'verification-steps/setVerificationStep',
+      VerificationStepMod.uploadSourceStep,
+      { root: true }
+    )
   }
 
   @Action
@@ -139,7 +173,11 @@ export default class VerificationRuntimeStore extends VuexModule {
         type: 'success'
       })
 
-      EventBus.$emit(EditorEvents.projectIdentified, { projectId: json.project_id })
+      this.context.commit(
+        'editor/setProjectId',
+        { projectId: json.project_id },
+        { root: true }
+      )
 
       const project: Project = {
         id: json.project_id,
@@ -207,7 +245,11 @@ export default class VerificationRuntimeStore extends VuexModule {
         llvmBitcodeGenerationStepStarted: true
       }
 
-      this.context.commit('setVerificationStep', VerificationStepMod.llvmBitCodeGenerationStep)
+      this.context.commit(
+        'verification-steps/setVerificationStep',
+        VerificationStepMod.llvmBitCodeGenerationStep,
+        { root: true }
+      )
       this.context.commit('addProject', projectState)
     } catch (e) {
       Vue.notify({
@@ -246,7 +288,11 @@ export default class VerificationRuntimeStore extends VuexModule {
       }
 
       if (llvmBitcodeGenerationStepDone) {
-        this.context.commit('setVerificationStep', VerificationStepMod.symbolicExecutionStep)
+        this.context.commit(
+          'verification-steps/setVerificationStep',
+          VerificationStepMod.symbolicExecutionStep,
+          { root: true }
+        )
       }
       this.context.commit('addProject', projectState)
     } catch (e) {
@@ -426,31 +472,6 @@ export default class VerificationRuntimeStore extends VuexModule {
         acc[p.id] = p
         return acc
       }, {})
-  }
-
-  public get nextAvailableVerificationStep (): VerificationStep {
-    return this.verificationStep
-  }
-
-  public get verificationStepReportGetter (): ({ project }: {project: Project}) => string {
-    return ({ project }: {project: Project}) => {
-      if (this.verificationStep === VerificationStepMod.uploadSourceStep) {
-        return ''
-      }
-
-      if (
-        this.verificationStep === VerificationStepMod.llvmBitCodeGenerationStep ||
-        !project.symbolicExecutionStepStarted
-      ) {
-        return project.llvmBitcodeGenerationStepReport.messages
-      }
-
-      if (this.verificationStep === VerificationStepMod.symbolicExecutionStep) {
-        return project.symbolicExecutionStepReport.messages
-      }
-
-      throw new InvalidVerificationStep(`Invalid verification step: "${this.verificationStep}"`)
-    }
   }
 
   public get projectByIdGetter () : (projectId: string) => Project|undefined {

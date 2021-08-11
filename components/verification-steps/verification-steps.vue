@@ -35,11 +35,6 @@
 import { Component, Prop, Vue } from 'nuxt-property-decorator'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
-import { VerificationStepPollingTarget } from '~/types/verification-steps'
-import { PollingTarget, VerificationStepProgress as Progress } from '~/modules/verification-steps'
-import { Project } from '~/types/project'
-
-class UnexpectedStep extends Error {}
 
 @Component
 export default class VerificationSteps extends Vue {
@@ -111,25 +106,6 @@ export default class VerificationSteps extends Vue {
     return {
       'verification-steps__disabled': true
     }
-  }
-
-  isVerificationStepProgressCompleted (project: Project, pollingTarget: VerificationStepPollingTarget): boolean {
-    return project[pollingTarget].raw_status &&
-    project[pollingTarget].raw_status === Progress.completed
-  }
-
-  isVerificationStepSuccessful (project: Project, pollingTarget: VerificationStepPollingTarget): boolean {
-    if (pollingTarget === PollingTarget.LLVMBitCodeGenerationStepReport) {
-      return project[pollingTarget].messages &&
-        project[pollingTarget].messages.includes('Wrote LLVM bitcode file')
-    }
-
-    if (pollingTarget === PollingTarget.SymbolicExecutionStepReport) {
-      return project[pollingTarget].messages &&
-        project[pollingTarget].messages.includes('KLEE: done: generated tests =')
-    }
-
-    throw new UnexpectedStep(`Sorry, pollingTarget ${pollingTarget} is unexpected.`)
   }
 }
 </script>

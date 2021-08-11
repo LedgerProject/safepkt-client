@@ -21,3 +21,8 @@ export class VerificationStep {
   static llvmBitCodeGenerationStep: Step = 'llvmBitCodeGenerationStep'
   static symbolicExecutionStep: Step = 'symbolicExecutionStep'
 }
+
+class InvalidVerificationStep extends Error {}
+class UnexpectedStep extends Error {}
+
+export { InvalidVerificationStep, UnexpectedStep }

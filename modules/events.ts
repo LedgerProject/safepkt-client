@@ -1,8 +1,3 @@
-export const EVENT_EDITOR_PROJECT_IDENTIFIED = 'editor.project-identified'
-
-export class EditorEvents {
-    static projectIdentified = EVENT_EDITOR_PROJECT_IDENTIFIED
-}
 
 export default class VerificationEvents {
     static sourceUploaded = 'verification-steps.source-uploaded'

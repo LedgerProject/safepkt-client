@@ -1,8 +1,4 @@
-
-type VerificationStepProgressRunning = 'verificationStepProgressRunning'
-type VerificationStepProgressCompleted = 'verificationStepProgressCompleted'
-
-type VerificationStepProgress = VerificationStepProgressRunning|VerificationStepProgressCompleted
+import {Project} from "~/types/project";
 
 type LLVMBitCodeGenerationStepProgress = 'llvmBitcodeGenerationStepProgress'
 type LLVMBitCodeGenerationStepReport = 'llvmBitcodeGenerationStepReport'
@@ -24,8 +20,10 @@ type VerificationStep =
     LLVMBitCodeGenerationStep|
     SymbolicExecutionStep
 
+type VerificationStepAssertion = (project: Project, pollingTarget: VerificationStepPollingTarget) => boolean
+
 export {
     VerificationStep,
-    VerificationStepProgress,
+    VerificationStepAssertion,
     VerificationStepPollingTarget,
 }
