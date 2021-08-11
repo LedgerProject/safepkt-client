@@ -84,8 +84,7 @@ const config: NuxtConfig = {
     '@nuxtjs/dotenv',
     '@nuxtjs/pwa',
     '@nuxtjs/router',
-    '@nuxtjs/svg',
-    'nuxt-lazysizes'
+    '@nuxtjs/svg'
   ],
 
   pwa: {
