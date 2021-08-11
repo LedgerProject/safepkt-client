@@ -8,8 +8,13 @@
       :can-upload-source="canUploadSource()"
       :can-generate-llvm-bitcode="canGenerateLlvmBitcode()"
       :can-run-symbolic-execution="canRunSymbolicExecution()"
+      :can-reset-verification-runtime="canResetVerificationRuntime()"
     />
-    <Report :content="verificationStepReport" />
+    <Report
+      :content="verificationStepReport()"
+      :next-step-available="nextStepAvailable()"
+      :title="getReportTitle()"
+    />
     <UploadedProjects />
     <notifications position="bottom right" />
   </div>
@@ -29,10 +34,16 @@ import VerificationSteps from '~/components/verification-steps/verification-step
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import { Project } from '~/types/project'
-import { PollingTarget } from '~/modules/verification-steps'
-import { VerificationStepPollingTarget } from '~/types/verification-steps'
-const Dashboard = namespace('dashboard')
+import {
+  PollingTarget,
+  VerificationStep as Step,
+  VerificationStep as NextVerificationStep
+} from '~/modules/verification-steps'
+import { VerificationStep, VerificationStepPollingTarget } from '~/types/verification-steps'
 
+const VerificationRuntime = namespace('verification-runtime')
+
+class NoTitleFound extends Error {}
 class ProjectNotFound extends Error {}
 
 @Component({
@@ -42,6 +53,8 @@ export default class Homepage extends Vue {
   logger = new SharedState.Logger()
 
   enabledSourceUpload: boolean = true
+
+  unlockedResetButton: boolean = false
 
   $refs!: {
     editor: Editor
@@ -56,46 +69,58 @@ export default class Homepage extends Vue {
 
   pollingSymbolicExecutionReport?: ReturnType<typeof setInterval>
 
-  @Dashboard.Getter
-  public verificationStepReport!: string = '';
+  @VerificationRuntime.Getter
+  public nextAvailableVerificationStep!: VerificationStep;
 
-  @Dashboard.Getter
+  @VerificationRuntime.Getter
+  public verificationStepReportGetter: ({ project }: {project: Project}) => string;
+
+  @VerificationRuntime.Getter
   public projectByIdGetter!: (projectId: string) => Project|undefined;
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public uploadSource!: ({ name, source, onSuccess }: {name: string, source: string, onSuccess: () => void}) => void
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public generateLlvmBitcode!: (project: Project) => void
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public pollLlvmBitcodeGenerationProgress!: (project: Project) => void
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public pollLlvmBitcodeGenerationReport!: (project: Project) => void
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public runSymbolicExecution!: (project : Project) => void
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public pollSymbolicExecutionProgress!: (project: Project) => void
 
-  @Dashboard.Action
+  @VerificationRuntime.Action
   public pollSymbolicExecutionReport!: (project: Project) => void
 
-  @Dashboard.Mutation
-  public resetDashboardStore!: () => void
+  @VerificationRuntime.Action
+  public resetVerificationRuntime!: () => void
 
   resetVerificationSteps () {
-    this.resetDashboardStore()
+    this.unlockedResetButton = false
+
+    this.resetVerificationRuntime()
     this.$refs.editor.setProjectId({ projectId: '' })
     this.enableSourceUpload()
+
+    this.startPollingLlvmBitcodeGenerationProgress()
+    this.startPollingLlvmBitcodeGenerationReport()
+    this.startPollingSymbolicExecutionProgress()
+    this.startPollingSymbolicExecutionReport()
   }
 
   destroyed () {
     EventBus.$off(VerificationEvents.sourceUploaded)
     EventBus.$off(VerificationEvents.llvmBitcodeGenerationStarted)
     EventBus.$off(VerificationEvents.symbolicExecutionStarted)
+    EventBus.$off(VerificationEvents.resetVerificationRuntime)
+    EventBus.$off(VerificationEvents.failedVerificationStep)
   }
 
   created () {
@@ -107,10 +132,14 @@ export default class Homepage extends Vue {
     EventBus.$off(VerificationEvents.sourceUploaded)
     EventBus.$off(VerificationEvents.llvmBitcodeGenerationStarted)
     EventBus.$off(VerificationEvents.symbolicExecutionStarted)
+    EventBus.$off(VerificationEvents.resetVerificationRuntime)
+    EventBus.$off(VerificationEvents.failedVerificationStep)
 
     EventBus.$on(VerificationEvents.sourceUploaded, this.tryToUploadSource)
     EventBus.$on(VerificationEvents.llvmBitcodeGenerationStarted, this.tryToGenerateLlvmBitcode)
     EventBus.$on(VerificationEvents.symbolicExecutionStarted, this.tryToRunSymbolicExecution)
+    EventBus.$on(VerificationEvents.resetVerificationRuntime, this.resetVerificationSteps)
+    EventBus.$on(VerificationEvents.failedVerificationStep, this.handleVerificationStepFailure)
   }
 
   beforeDestroy () {
@@ -140,6 +169,43 @@ export default class Homepage extends Vue {
     this.enabledSourceUpload = false
   }
 
+  handleVerificationStepFailure () {
+    this.unlockedResetButton = true
+  }
+
+  verificationStepReport (): string {
+    let projectId: string = ''
+
+    if (this.$refs.editor) {
+      projectId = this.$refs.editor.getProjectId()
+    }
+
+    if (projectId.length === 0) {
+      return ''
+    }
+
+    try {
+      const project: Project = this.projectById(projectId)
+      return this.verificationStepReportGetter({ project })
+    } catch (e) {
+      this.logger.error(
+        e.message,
+        'index.vue',
+        { projectId: project.id }
+      )
+
+      return ''
+    }
+  }
+
+  nextStepAvailable (): NextVerificationStep {
+    if (!this.nextAvailableVerificationStep) {
+      return NextVerificationStep.uploadSourceStep
+    }
+
+    return this.nextAvailableVerificationStep
+  }
+
   startPollingLlvmBitcodeGenerationProgress () {
     const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepProgress
 
@@ -163,11 +229,7 @@ export default class Homepage extends Vue {
         this.pollLlvmBitcodeGenerationProgress(project)
       } catch (e) {
         if (e instanceof ProjectNotFound) {
-          this.logger.error(
-            e.message,
-            'index.vue',
-            { pollingTarget }
-          )
+          // expected behavior
         } else if (this.pollingLlvmBitcodeGenerationProgress) {
           clearInterval(this.pollingLlvmBitcodeGenerationProgress)
         }
@@ -202,11 +264,7 @@ export default class Homepage extends Vue {
         this.pollLlvmBitcodeGenerationReport(project)
       } catch (e) {
         if (e instanceof ProjectNotFound) {
-          this.logger.error(
-            e.message,
-            'index.vue',
-            { pollingTarget }
-          )
+          // expected behavior
         } else if (this.pollingLlvmBitcodeGenerationReport) {
           clearInterval(this.pollingLlvmBitcodeGenerationReport)
         }
@@ -237,11 +295,7 @@ export default class Homepage extends Vue {
         this.pollSymbolicExecutionProgress(project)
       } catch (e) {
         if (e instanceof ProjectNotFound) {
-          this.logger.error(
-            e.message,
-            'index.vue',
-            { pollingTarget }
-          )
+          // expected behavior
         } else if (this.pollingSymbolicExecutionProgress) {
           clearInterval(this.pollingSymbolicExecutionProgress)
         }
@@ -259,11 +313,11 @@ export default class Homepage extends Vue {
         project = this.projectById(this.$refs.editor.getProjectId())
 
         if (
-          // Early return when LLVM bitcode generation has not yet been started
-          // nor it is done
+        // Early return when LLVM bitcode generation has not yet been started
+        // nor it is done
           !project.llvmBitcodeGenerationStepStarted ||
-          !project.llvmBitcodeGenerationStepDone ||
-          !project.symbolicExecutionStepStarted
+            !project.llvmBitcodeGenerationStepDone ||
+            !project.symbolicExecutionStepStarted
         ) {
           return
         }
@@ -271,7 +325,6 @@ export default class Homepage extends Vue {
         if (this.$refs.steps.isVerificationStepSuccessful(project, pollingTarget)) {
           if (this.pollingSymbolicExecutionReport) {
             clearInterval(this.pollingSymbolicExecutionReport)
-            this.resetVerificationSteps()
           }
           return
         }
@@ -279,14 +332,9 @@ export default class Homepage extends Vue {
         this.pollSymbolicExecutionReport(project)
       } catch (e) {
         if (e instanceof ProjectNotFound) {
-          this.logger.error(
-            e.message,
-            'index.vue',
-            { pollingTarget }
-          )
+          // expected behavior
         } else if (this.pollingSymbolicExecutionReport) {
           clearInterval(this.pollingSymbolicExecutionReport)
-          this.resetVerificationSteps()
         }
       }
     }, 1000)
@@ -316,7 +364,7 @@ export default class Homepage extends Vue {
       return false
     }
 
-    return project.llvmBitcodeGenerationStepDone
+    return project.llvmBitcodeGenerationStepStarted
   }
 
   canGenerateLlvmBitcode () {
@@ -355,9 +403,53 @@ export default class Homepage extends Vue {
     const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepReport
 
     return project.llvmBitcodeGenerationStepDone &&
-      this.$refs.steps.isVerificationStepSuccessful(project, pollingTarget) &&
-      // No symbolic execution has started
-      !project.symbolicExecutionStepStarted
+        this.$refs.steps.isVerificationStepSuccessful(project, pollingTarget) &&
+        // No symbolic execution has started
+        !project.symbolicExecutionStepStarted
+  }
+
+  canResetVerificationRuntime (): boolean {
+    const noVerificationStepAvailable = !this.canUploadSource() &&
+        !this.canGenerateLlvmBitcode() &&
+        !this.canRunSymbolicExecution()
+
+    if (noVerificationStepAvailable) {
+      const project = this.projectById(this.$refs.editor.getProjectId())
+
+      const stepsHaveBeenCompleted = project.llvmBitcodeGenerationStepDone &&
+        project.symbolicExecutionStepDone
+
+      if (!stepsHaveBeenCompleted && this.unlockedResetButton) {
+        return true
+      }
+
+      return stepsHaveBeenCompleted
+    }
+
+    return false
+  }
+
+  getReportTitle () {
+    let project: Project
+
+    if (this.$refs.editor && this.$refs.editor.getProjectId()) {
+      project = this.projectById(this.$refs.editor.getProjectId())
+    }
+
+    switch (true) {
+      case this.nextStepAvailable() === Step.uploadSourceStep:
+        return 'Source upload'
+
+      case this.nextStepAvailable() === Step.llvmBitCodeGenerationStep ||
+        (project && !project.symbolicExecutionStepStarted):
+        return 'LLVM bitcode generation report'
+
+      case this.nextStepAvailable() === Step.symbolicExecutionStep:
+        return 'Symbolic execution report'
+
+      default:
+        throw new NoTitleFound()
+    }
   }
 
   async tryToUploadSource () {

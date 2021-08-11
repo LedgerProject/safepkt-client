@@ -2,12 +2,17 @@
 .report {
   display: flex;
   content: "";
-  margin: auto;
-  margin-top: 16px;
+  flex-direction: column;
+  margin: 16px auto auto;
   width: var(--max-width);
 
   &__content {
     min-height: 250px;
+    padding: 8px;
     width: 100%;
+
+    &--hidden {
+      visibility: hidden;
+    }
   }
 }

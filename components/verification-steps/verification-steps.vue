@@ -21,6 +21,13 @@
     >
       Run symbolic execution
     </button>
+    <button
+      :class="resetVerificationButtonClasses()"
+      :disabled="!canResetVerificationRuntime"
+      @click="resetVerificationRuntime"
+    >
+      ⚠️ Reset runtime
+    </button>
   </div>
 </template>
 
@@ -54,6 +61,12 @@ export default class VerificationSteps extends Vue {
   })
   canRunSymbolicExecution!: boolean;
 
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  canResetVerificationRuntime!: boolean;
+
   uploadSource () {
     EventBus.$emit(VerificationEvents.sourceUploaded)
   }
@@ -64,6 +77,10 @@ export default class VerificationSteps extends Vue {
 
   runSymbolicExecution () {
     EventBus.$emit(VerificationEvents.symbolicExecutionStarted)
+  }
+
+  resetVerificationRuntime () {
+    EventBus.$emit(VerificationEvents.resetVerificationRuntime)
   }
 
   uploadSourceButtonClasses () {
@@ -80,6 +97,12 @@ export default class VerificationSteps extends Vue {
 
   symbolicExecutionButtonClasses () {
     if (!this.canRunSymbolicExecution) {
+      return this.getDefaultDisabledButtonClass()
+    }
+  }
+
+  resetVerificationButtonClasses () {
+    if (!this.canResetVerificationRuntime) {
       return this.getDefaultDisabledButtonClass()
     }
   }

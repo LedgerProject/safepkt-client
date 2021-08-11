@@ -1,11 +1,11 @@
 import { Store } from 'vuex'
 import { getModule } from 'vuex-module-decorators'
-import dashboard from '~/store/dashboard'
+import verificationRuntime from '~/store/verification-runtime'
 
-let dashboardStore: dashboard
+let verificationRuntimeStore: verificationRuntime
 
 function initialiseStores (store: Store<any>): void {
-  dashboardStore = getModule(dashboard, store)
+  verificationRuntimeStore = getModule(verificationRuntime, store)
 }
 
-export { initialiseStores, dashboardStore }
+export { initialiseStores, verificationRuntimeStore }

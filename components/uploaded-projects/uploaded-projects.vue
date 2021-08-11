@@ -20,11 +20,11 @@
 import { Component, Vue, namespace } from 'nuxt-property-decorator'
 import { Project } from '~/types/project'
 
-const Dashboard = namespace('dashboard')
+const VerificationRuntime = namespace('verification-runtime')
 
 @Component
 export default class UploadedProjects extends Vue {
-  @Dashboard.Getter
+  @VerificationRuntime.Getter
   public allProjects!: Project[]
 
   getAllProjects () {

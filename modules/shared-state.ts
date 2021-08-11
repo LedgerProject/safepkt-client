@@ -45,15 +45,17 @@ class Logger {
       return
     }
 
-    if (!productionMode) {
-      console.log(message, file, extra)
+    if (productionMode) {
+      return
     }
+
+    console.log(message, file, extra)
   }
 
   error (error: string, file: string, extra: {[key:string]: string}): string {
     logLevel.onError({ error, file, extra })
 
-    if (!productionMode || logLevel.isSilent) {
+    if (productionMode || logLevel.isSilent) {
       return error
     }
 

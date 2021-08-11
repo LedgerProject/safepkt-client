@@ -3,18 +3,20 @@ import Vue from 'vue'
 import { Project } from '~/types/project'
 import Config, { HttpMethod, Routes } from '~/config'
 import EventBus from '~/modules/event-bus'
-import { EditorEvents } from '~/modules/events'
+import VerificationEvents, { EditorEvents } from '~/modules/events'
 import { VerificationStep as VerificationStepMod, VerificationStepProgress } from '~/modules/verification-steps'
 import { VerificationStep } from '~/types/verification-steps'
 
+class InvalidVerificationStep extends Error {}
+
 @Module({
-  name: 'dashboard',
+  name: 'verification-runtime',
   stateFactory: true,
   namespaced: true
 })
-export default class Dashboard extends VuexModule {
+export default class VerificationRuntime extends VuexModule {
   projects: Project[] = []
-  step: VerificationStep = VerificationStepMod.uploadSourceStep
+  verificationStep: VerificationStep = VerificationStepMod.uploadSourceStep
 
   get routingParams (): {baseUrl: string, routes: Routes} {
     return {
@@ -60,7 +62,12 @@ export default class Dashboard extends VuexModule {
   }
 
   @Mutation
-  public resetDashboardStore (): void {
+  setVerificationStep (step: VerificationStep) {
+    this.verificationStep = step
+  }
+
+  @Mutation
+  public resetProjectState (): void {
     if (
       typeof this.projects === 'undefined' ||
       !this.projects
@@ -87,6 +94,12 @@ export default class Dashboard extends VuexModule {
     })
 
     this.projects = [...projects]
+  }
+
+  @Action
+  public resetVerificationRuntime (): void {
+    this.context.commit('resetProjectState')
+    this.context.commit('setVerificationStep', VerificationStepMod.uploadSourceStep)
   }
 
   @Action
@@ -180,6 +193,7 @@ export default class Dashboard extends VuexModule {
       llvmBitcodeGenerationStepStarted: true
     }
 
+    this.context.commit('setVerificationStep', VerificationStepMod.llvmBitCodeGenerationStep)
     this.context.commit('addProject', projectState)
   }
 
@@ -202,12 +216,17 @@ export default class Dashboard extends VuexModule {
       return
     }
 
+    const llvmBitcodeGenerationStepDone = json.raw_status === VerificationStepProgress.completed
+
     const projectState: Project = {
       ...project,
       llvmBitcodeGenerationStepProgress: json,
-      llvmBitcodeGenerationStepDone: json.raw_status === VerificationStepProgress.completed
+      llvmBitcodeGenerationStepDone
     }
 
+    if (llvmBitcodeGenerationStepDone) {
+      this.context.commit('setVerificationStep', VerificationStepMod.symbolicExecutionStep)
+    }
     this.context.commit('addProject', projectState)
   }
 
@@ -236,6 +255,10 @@ export default class Dashboard extends VuexModule {
     }
 
     this.context.commit('addProject', projectState)
+
+    if (json.messages.includes('FAILED:')) {
+      EventBus.$emit(VerificationEvents.failedVerificationStep)
+    }
   }
 
   @Action
@@ -299,10 +322,12 @@ export default class Dashboard extends VuexModule {
       return
     }
 
+    const symbolicExecutionStepDone = json.raw_status === VerificationStepProgress.completed
+
     const projectState: Project = {
       ...project,
       symbolicExecutionStepProgress: json,
-      symbolicExecutionStepDone: json.raw_status === VerificationStepProgress.completed
+      symbolicExecutionStepDone
     }
 
     this.context.commit('addProject', projectState)
@@ -345,6 +370,31 @@ export default class Dashboard extends VuexModule {
         acc[p.id] = p
         return acc
       }, {})
+  }
+
+  public get nextAvailableVerificationStep (): VerificationStep {
+    return this.verificationStep
+  }
+
+  public get verificationStepReportGetter (): ({ project }: {project: Project}) => string {
+    return ({ project }: {project: Project}) => {
+      if (this.verificationStep === VerificationStepMod.uploadSourceStep) {
+        return ''
+      }
+
+      if (
+        this.verificationStep === VerificationStepMod.llvmBitCodeGenerationStep ||
+        !project.symbolicExecutionStepStarted
+      ) {
+        return project.llvmBitcodeGenerationStepReport.messages
+      }
+
+      if (this.verificationStep === VerificationStepMod.symbolicExecutionStep) {
+        return project.symbolicExecutionStepReport.messages
+      }
+
+      throw new InvalidVerificationStep(`Invalid verification step: "${this.verificationStep}"`)
+    }
   }
 
   public get projectByIdGetter () : (projectId: string) => Project|undefined {
