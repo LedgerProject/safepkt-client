@@ -1,34 +1,31 @@
-import { Component, mixins } from 'nuxt-property-decorator'
+import { Component, mixins, namespace } from 'nuxt-property-decorator'
 import { VerificationStepPollingTarget } from '~/types/verification-steps'
 import { PollingTarget } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
 import VerificationStepsMixin from '~/mixins/verification-steps'
 import { Project } from '~/types/project'
 
+const SymbolicExecutionStore = namespace('step/symbolic-execution')
+
 @Component
 class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
-  pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
+  @SymbolicExecutionStore.Getter
+  public canRunSymbolicExecutionStep!: () => boolean
 
-  pollingSymbolicExecutionReport?: ReturnType<typeof setInterval>
+  @SymbolicExecutionStore.Action
+  public runSymbolicExecution!: (project : Project) => void
 
-  canRunSymbolicExecution () {
-    if (!this.isProjectIdValid()) {
-      return false
-    }
+  @SymbolicExecutionStore.Action
+  public pollSymbolicExecutionProgress!: (project: Project) => void
 
-    const project = this.projectById(this.projectId)
-
-    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepReport
-
-    return project.llvmBitcodeGenerationStepDone &&
-        this.isVerificationStepSuccessful(project, pollingTarget) &&
-        // No symbolic execution has started
-        !project.symbolicExecutionStepStarted
-  }
+  @SymbolicExecutionStore.Action
+  public pollSymbolicExecutionReport!: (project: Project) => void
 
   async tryToRunSymbolicExecution () {
     await this.runSymbolicExecution(this.projectById(this.projectId))
   }
+
+  pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
 
   startPollingSymbolicExecutionProgress () {
     const pollingTarget: VerificationStepPollingTarget = PollingTarget.SymbolicExecutionStepProgress
@@ -60,6 +57,8 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
       }
     }, 1000)
   }
+
+  pollingSymbolicExecutionReport?: ReturnType<typeof setInterval>
 
   startPollingSymbolicExecutionReport () {
     const pollingTarget: VerificationStepPollingTarget = PollingTarget.SymbolicExecutionStepReport

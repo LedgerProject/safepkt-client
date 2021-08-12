@@ -1,25 +1,27 @@
 
 .verification-steps {
   display: flex;
-  justify-content: flex-end;
-  margin: auto;
-  width: 100vw;
+  height: 50px;
+  margin: auto auto auto 0;
 
   @media (min-width: $max-width) {
-    max-width: var(--desktop-width);
-    width: var(--desktop-width);
+    align-self: flex-end;
+    margin: auto auto auto var(--space);
   }
 
   button {
     background: none;
     border-radius: 4px;
     border: 1px solid var(--border-color);
-    margin-left: 16px;
-    margin-top: 16px;
-    padding: 8px;
+    box-shadow: 2px 1px 1px black;
+    font-size: 1em;
+    margin: auto;
+    padding: var(--space);
+    width: 250px;
 
     &.verification-steps__disabled {
       background-color: #c1c1c1;
+      display: none;
     }
 
     &:hover {

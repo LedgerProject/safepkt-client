@@ -12,7 +12,7 @@ type VerificationStepPollingTarget =
     SymbolicExecutionStepReport
 
 type UploadSourceStep = 'uploadSourceStep'
-type LLVMBitCodeGenerationStep = 'llvmBitCodeGenerationStep'
+type LLVMBitCodeGenerationStep = 'llvmBitcodeGenerationStep'
 type SymbolicExecutionStep = 'symbolicExecutionStep'
 
 type VerificationStep =

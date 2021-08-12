@@ -1,11 +1,16 @@
 import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  editorStore,
+  verificationRuntimeStore
+} from '~/store'
 import { Project } from '~/types/project'
 import { VerificationStep, VerificationStepAssertion, VerificationStepPollingTarget } from '~/types/verification-steps'
 import {
   PollingTarget,
   VerificationStepProgress as Progress,
   UnexpectedStep,
-  VerificationStep as VerificationStepMod, InvalidVerificationStep, VerificationStep as NextVerificationStep
+  InvalidVerificationStep,
+  VerificationStep as Step
 } from '~/modules/verification-steps'
 
 @Module({
@@ -14,37 +19,89 @@ import {
   namespaced: true
 })
 export default class VerificationStepsStore extends VuexModule {
-  verificationStep: VerificationStep = VerificationStepMod.uploadSourceStep
+  lockedResetButton: boolean = true
+  verificationStep: VerificationStep = Step.uploadSourceStep
 
   @Mutation
   setVerificationStep (step: VerificationStep) {
     this.verificationStep = step
   }
 
-  public get nextStepAvailable (): () => NextVerificationStep {
-    return () => {
-      if (!this.nextAvailableVerificationStep) {
-        return NextVerificationStep.uploadSourceStep
+  @Mutation
+  lockResetButton (): void {
+    this.lockedResetButton = true
+  }
+
+  @Mutation
+  unlockResetButton (): void {
+    this.lockedResetButton = false
+  }
+
+  get isResetButtonLocked (): boolean {
+    return this.lockedResetButton
+  }
+
+  get canRunVerificationStep (): (step: VerificationStep) => boolean {
+    return (step: VerificationStep) => {
+      let canDo = false
+
+      if (step === Step.uploadSourceStep) {
+        canDo = this.context.rootGetters['step/upload-source/canUploadSource']()
       }
 
-      return this.nextAvailableVerificationStep
+      if (step === Step.llvmBitcodeGenerationStep) {
+        canDo = this.context.rootGetters['step/llvm-bitcode-generation/canRunLlvmBitcodeGenerationStep']()
+      }
+
+      if (step === Step.symbolicExecutionStep) {
+        canDo = this.context.rootGetters['step/symbolic-execution/canRunSymbolicExecutionStep']()
+      }
+
+      return canDo
     }
   }
 
-  public get verificationStepReportGetter (): ({ project }: {project: Project}) => string {
+  get canResetVerificationRuntime (): boolean {
+    const noVerificationStepAvailable = !this.canRunVerificationStep(Step.uploadSourceStep) &&
+        !this.canRunVerificationStep(Step.llvmBitcodeGenerationStep) &&
+        !this.canRunVerificationStep(Step.symbolicExecutionStep)
+
+    if (noVerificationStepAvailable) {
+      if (!editorStore.isProjectIdValid()) {
+        return false
+      }
+
+      const project = verificationRuntimeStore.projectById(
+        editorStore.projectId
+      )
+
+      const stepsHaveBeenCompleted = project.llvmBitcodeGenerationStepDone &&
+          project.symbolicExecutionStepDone
+
+      if (!stepsHaveBeenCompleted && !this.lockedResetButton) {
+        return true
+      }
+
+      return stepsHaveBeenCompleted
+    }
+
+    return false
+  }
+
+  get verificationStepReportGetter (): ({ project }: {project: Project}) => string {
     return ({ project }: {project: Project}) => {
-      if (this.verificationStep === VerificationStepMod.uploadSourceStep) {
+      if (this.verificationStep === Step.uploadSourceStep) {
         return ''
       }
 
       if (
-        this.verificationStep === VerificationStepMod.llvmBitCodeGenerationStep ||
+        this.verificationStep === Step.llvmBitcodeGenerationStep ||
           !project.symbolicExecutionStepStarted
       ) {
         return project.llvmBitcodeGenerationStepReport.messages
       }
 
-      if (this.verificationStep === VerificationStepMod.symbolicExecutionStep) {
+      if (this.verificationStep === Step.symbolicExecutionStep) {
         return project.symbolicExecutionStepReport.messages
       }
 
@@ -52,14 +109,14 @@ export default class VerificationStepsStore extends VuexModule {
     }
   }
 
-  public get isVerificationStepProgressCompleted (): VerificationStepAssertion {
+  get isVerificationStepProgressCompleted (): VerificationStepAssertion {
     return (project: Project, pollingTarget: VerificationStepPollingTarget) => {
       return project[pollingTarget].raw_status &&
           project[pollingTarget].raw_status === Progress.completed
     }
   }
 
-  public get isVerificationStepSuccessful (): VerificationStepAssertion {
+  get isVerificationStepSuccessful (): VerificationStepAssertion {
     return (project: Project, pollingTarget: VerificationStepPollingTarget) => {
       if (pollingTarget === PollingTarget.LLVMBitCodeGenerationStepReport) {
         return project[pollingTarget].messages &&
@@ -75,7 +132,7 @@ export default class VerificationStepsStore extends VuexModule {
     }
   }
 
-  public get nextAvailableVerificationStep (): VerificationStep {
-    return this.verificationStep
+  get nextStep (): () => VerificationStep {
+    return () => this.verificationStep
   }
 }

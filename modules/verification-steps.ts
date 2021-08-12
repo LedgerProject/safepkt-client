@@ -18,7 +18,7 @@ export class PollingTarget {
 
 export class VerificationStep {
   static uploadSourceStep: Step = 'uploadSourceStep'
-  static llvmBitCodeGenerationStep: Step = 'llvmBitCodeGenerationStep'
+  static llvmBitcodeGenerationStep: Step = 'llvmBitcodeGenerationStep'
   static symbolicExecutionStep: Step = 'symbolicExecutionStep'
 }
 

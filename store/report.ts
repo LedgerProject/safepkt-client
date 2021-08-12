@@ -14,26 +14,30 @@ import {
   namespaced: true
 })
 class ReportStore extends VuexModule {
-  public get isReportVisible (): boolean {
-    return verificationStepsStore.nextStepAvailable() !== Step.uploadSourceStep
+  get isReportVisible (): boolean {
+    return verificationStepsStore.nextStep() !== Step.uploadSourceStep
   }
 
-  public get reportTitle (): string {
+  get reportTitle (): string {
     let project: Project|null = null
+
+    if (typeof editorStore === 'undefined') {
+      return ''
+    }
 
     if (editorStore.isProjectIdValid()) {
       project = verificationRuntimeStore.projectById(editorStore.projectId)
     }
 
     switch (true) {
-      case verificationStepsStore.nextStepAvailable() === VerificationStep.uploadSourceStep:
+      case verificationStepsStore.nextStep() === VerificationStep.uploadSourceStep:
         return 'Source upload'
 
-      case verificationStepsStore.nextStepAvailable() === VerificationStep.llvmBitCodeGenerationStep ||
+      case verificationStepsStore.nextStep() === VerificationStep.llvmBitcodeGenerationStep ||
       (project && !project.symbolicExecutionStepStarted):
         return 'LLVM bitcode generation report'
 
-      case verificationStepsStore.nextStepAvailable() === VerificationStep.symbolicExecutionStep:
+      case verificationStepsStore.nextStep() === VerificationStep.symbolicExecutionStep:
         return 'Symbolic execution report'
 
       default:

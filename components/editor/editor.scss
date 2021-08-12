@@ -9,6 +9,16 @@
     max-width: var(--desktop-width);
   }
 
+  &__inputs {
+    display: flex;
+    flex-direction: column;
+    align-content: flex-start;
+
+    @media (min-width: $max-width) {
+      flex-direction: row;
+    }
+  }
+
   [for=project_name] {
     display: flex;
     font-size: 1em;
@@ -19,7 +29,6 @@
     @media (min-width: $max-width) {
       flex-direction: row;
       align-items: center;
-      max-width: var(--max-width);
     }
   }
 

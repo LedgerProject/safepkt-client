@@ -2,28 +2,28 @@
   <div class="verification-steps">
     <button
       :class="uploadSourceButtonClasses()"
-      :disabled="!canUploadSource"
-      @click="uploadSource"
+      :disabled="!enableUploadSourceButton"
+      @click="tryToUploadSource"
     >
       Upload source code
     </button>
     <button
       :class="generateLlvmBitcodeButtonClasses()"
-      :disabled="!canGenerateLlvmBitcode"
-      @click="generateLlvmBitcode"
+      :disabled="!enableGenerateLlvmBitcodeButton"
+      @click="tryToGenerateLlvmBitcode"
     >
       Generate LLVM bitcode
     </button>
     <button
       :class="symbolicExecutionButtonClasses()"
-      :disabled="!canRunSymbolicExecution"
-      @click="runSymbolicExecution"
+      :disabled="!enableRunSymbolicExecutionButton"
+      @click="tryToRunSymbolicExecution"
     >
       Run symbolic execution
     </button>
     <button
       :class="resetVerificationButtonClasses()"
-      :disabled="!canResetVerificationRuntime"
+      :disabled="!enableResetVerificationRuntimeButton"
       @click="resetVerificationRuntime"
     >
       ⚠️ Reset runtime
@@ -32,72 +32,61 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'nuxt-property-decorator'
-import EventBus from '~/modules/event-bus'
-import VerificationEvents from '~/modules/events'
+import { Component, mixins, Prop } from 'nuxt-property-decorator'
+import UploadSourceMixin from '~/mixins/step/upload-source'
+import LlvmBitcodeGenerationMixin from '~/mixins/step/llvm-bitcode-generation'
+import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 
 @Component
-export default class VerificationSteps extends Vue {
+export default class VerificationSteps extends mixins(
+  UploadSourceMixin,
+  LlvmBitcodeGenerationMixin,
+  SymbolicExecutionMixin
+) {
   @Prop({
     type: Boolean,
-    default: true
+    required: true
   })
-  canUploadSource!: boolean;
-
-  @Prop({
-    type: Boolean,
-    default: false
-  })
-  canGenerateLlvmBitcode!: boolean;
-
-  @Prop({
-    type: Boolean,
-    default: false
-  })
-  canRunSymbolicExecution!: boolean;
+  enableUploadSourceButton!: boolean;
 
   @Prop({
     type: Boolean,
-    default: false
+    required: true
   })
-  canResetVerificationRuntime!: boolean;
+  enableGenerateLlvmBitcodeButton!: boolean;
 
-  uploadSource () {
-    EventBus.$emit(VerificationEvents.sourceUploaded)
-  }
+  @Prop({
+    type: Boolean,
+    required: true
+  })
+  enableRunSymbolicExecutionButton!: boolean;
 
-  generateLlvmBitcode () {
-    EventBus.$emit(VerificationEvents.llvmBitcodeGenerationStarted)
-  }
-
-  runSymbolicExecution () {
-    EventBus.$emit(VerificationEvents.symbolicExecutionStarted)
-  }
-
-  resetVerificationRuntime () {
-    EventBus.$emit(VerificationEvents.resetVerificationRuntime)
-  }
+  @Prop({
+    type: Boolean,
+    required: true
+  })
+  enableResetVerificationRuntimeButton!: boolean;
 
   uploadSourceButtonClasses () {
-    if (!this.canUploadSource) {
+    if (!this.enableUploadSourceButton) {
       return this.getDefaultDisabledButtonClass()
     }
   }
 
   generateLlvmBitcodeButtonClasses () {
-    if (!this.canGenerateLlvmBitcode) {
+    if (!this.enableGenerateLlvmBitcodeButton) {
       return this.getDefaultDisabledButtonClass()
     }
   }
 
   symbolicExecutionButtonClasses () {
-    if (!this.canRunSymbolicExecution) {
+    if (!this.enableRunSymbolicExecutionButton) {
       return this.getDefaultDisabledButtonClass()
     }
   }
 
   resetVerificationButtonClasses () {
-    if (!this.canResetVerificationRuntime) {
+    if (!this.enableResetVerificationRuntimeButton) {
       return this.getDefaultDisabledButtonClass()
     }
   }

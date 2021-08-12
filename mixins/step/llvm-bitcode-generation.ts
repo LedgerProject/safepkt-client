@@ -5,12 +5,21 @@ import { PollingTarget } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
 import VerificationStepsMixin from '~/mixins/verification-steps'
 
-const VerificationRuntimeStore = namespace('verification-runtime')
+const LlvmBitcodeGenerationStore = namespace('step/llvm-bitcode-generation')
 
 @Component
 class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
-  @VerificationRuntimeStore.Action
+  @LlvmBitcodeGenerationStore.Getter
+  public canRunLlvmBitcodeGenerationStep!: () => boolean;
+
+  @LlvmBitcodeGenerationStore.Action
   public generateLlvmBitcode!: (project: Project) => void
+
+  @LlvmBitcodeGenerationStore.Action
+  public pollLlvmBitcodeGenerationProgress!: (project: Project) => void
+
+  @LlvmBitcodeGenerationStore.Action
+  public pollLlvmBitcodeGenerationReport!: (project: Project) => void
 
   pollingLlvmBitcodeGenerationProgress?: ReturnType<typeof setInterval>
 

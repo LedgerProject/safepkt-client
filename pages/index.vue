@@ -2,15 +2,8 @@
   <div class="homepage">
     <Header />
     <Editor />
-    <VerificationSteps
-      :can-upload-source="canUploadSource()"
-      :can-generate-llvm-bitcode="canRunVerificationStep('llvmBitCodeGenerationStep')"
-      :can-run-symbolic-execution="canRunSymbolicExecution()"
-      :can-reset-verification-runtime="canResetVerificationRuntime()"
-    />
     <Report
       :content="verificationStepReport()"
-      :next-step-available="nextStepAvailable()"
       :title="reportTitle"
     />
     <UploadedProjects v-show="showUploadedProjects" />
@@ -25,54 +18,36 @@ import Editor from '~/components/editor/editor.vue'
 import Head from '~/components/header/header.vue'
 import Report from '~/components/report/report.vue'
 import UploadedProjects from '~/components/uploaded-projects/uploaded-projects.vue'
-import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
-import { VerificationStep } from '~/modules/verification-steps'
 import UploadSourceMixin from '~/mixins/step/upload-source'
 import LlvmBitcodeGenerationMixin from '~/mixins/step/llvm-bitcode-generation'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 
 const ReportStore = namespace('report')
+const VerificationStepsStore = namespace('verification-steps')
 
 @Component({
-  components: { Editor, Head, Report, UploadedProjects, VerificationSteps }
+  components: { Editor, Head, Report, UploadedProjects }
 })
 export default class Homepage extends mixins(
   UploadSourceMixin,
   LlvmBitcodeGenerationMixin,
   SymbolicExecutionMixin
 ) {
-  unlockedResetButton: boolean = false
-
   showUploadedProjects: boolean = false
 
   @ReportStore.Getter
   reportTitle!: string
 
-  canResetVerificationRuntime (): boolean {
-    const noVerificationStepAvailable = !this.canUploadSource() &&
-        !this.canRunVerificationStep(VerificationStep.llvmBitCodeGenerationStep) &&
-        !this.canRunSymbolicExecution()
+  @VerificationStepsStore.Mutation
+  unlockResetButton!: () => void
 
-    if (noVerificationStepAvailable) {
-      const project = this.projectById(this.projectId)
-
-      const stepsHaveBeenCompleted = project.llvmBitcodeGenerationStepDone &&
-          project.symbolicExecutionStepDone
-
-      if (!stepsHaveBeenCompleted && this.unlockedResetButton) {
-        return true
-      }
-
-      return stepsHaveBeenCompleted
-    }
-
-    return false
-  }
+  @VerificationStepsStore.Mutation
+  lockResetButton!: () => void
 
   resetVerificationSteps () {
-    this.unlockedResetButton = false
+    this.lockResetButton()
 
     this.resetVerificationRuntime()
     this.setProjectId({ projectId: '' })
@@ -84,27 +59,16 @@ export default class Homepage extends mixins(
     this.startPollingSymbolicExecutionReport()
   }
 
-  handleVerificationStepFailure () {
-    this.unlockedResetButton = true
-  }
-
   created () {
+    this.resetVerificationRuntime()
+
     this.startPollingLlvmBitcodeGenerationProgress()
     this.startPollingLlvmBitcodeGenerationReport()
     this.startPollingSymbolicExecutionProgress()
     this.startPollingSymbolicExecutionReport()
 
-    EventBus.$off(VerificationEvents.sourceUploaded)
-    EventBus.$off(VerificationEvents.llvmBitcodeGenerationStarted)
-    EventBus.$off(VerificationEvents.symbolicExecutionStarted)
-    EventBus.$off(VerificationEvents.resetVerificationRuntime)
-    EventBus.$off(VerificationEvents.failedVerificationStep)
-
-    EventBus.$on(VerificationEvents.sourceUploaded, this.tryToUploadSource)
-    EventBus.$on(VerificationEvents.llvmBitcodeGenerationStarted, this.tryToGenerateLlvmBitcode)
-    EventBus.$on(VerificationEvents.symbolicExecutionStarted, this.tryToRunSymbolicExecution)
     EventBus.$on(VerificationEvents.resetVerificationRuntime, this.resetVerificationSteps)
-    EventBus.$on(VerificationEvents.failedVerificationStep, this.handleVerificationStepFailure)
+    EventBus.$on(VerificationEvents.failedVerificationStep, this.unlockResetButton)
   }
 
   beforeDestroy () {
@@ -123,9 +87,6 @@ export default class Homepage extends mixins(
   }
 
   destroyed () {
-    EventBus.$off(VerificationEvents.sourceUploaded)
-    EventBus.$off(VerificationEvents.llvmBitcodeGenerationStarted)
-    EventBus.$off(VerificationEvents.symbolicExecutionStarted)
     EventBus.$off(VerificationEvents.resetVerificationRuntime)
     EventBus.$off(VerificationEvents.failedVerificationStep)
   }

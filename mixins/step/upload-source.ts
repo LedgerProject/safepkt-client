@@ -1,29 +1,25 @@
-import { Component, mixins } from 'nuxt-property-decorator'
+import { Component, mixins, namespace } from 'nuxt-property-decorator'
 import VerificationStepsMixin from '~/mixins/verification-steps'
+
+const UploadSourceStore = namespace('step/upload-source')
 
 @Component
 class UploadSourceMixin extends mixins(VerificationStepsMixin) {
-  enabledSourceUpload: boolean = true
+  @UploadSourceStore.Getter
+  public canUploadSource!: () => boolean
 
-  public canUploadSource (): boolean {
-    return this.enabledSourceUpload
-  }
+  @UploadSourceStore.Mutation
+  public enableSourceUpload!: () => void
 
-  enableSourceUpload (): void {
-    this.enabledSourceUpload = true
-  }
-
-  disableSourceUpload (): void {
-    this.enabledSourceUpload = false
-  }
+  @UploadSourceStore.Action
+  public uploadSource!: ({ name, source }: {name: string, source: string }) => void
 
   async tryToUploadSource () {
     this.setProjectId({ projectId: '' })
 
     await this.uploadSource({
       name: this.projectName,
-      source: this.base64EncodedSource,
-      onSuccess: this.disableSourceUpload
+      source: this.base64EncodedSource
     })
   }
 }
