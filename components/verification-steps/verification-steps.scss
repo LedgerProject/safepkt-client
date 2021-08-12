@@ -3,7 +3,12 @@
   display: flex;
   justify-content: flex-end;
   margin: auto;
-  width: var(--max-width);
+  width: 100vw;
+
+  @media (min-width: $max-width) {
+    max-width: var(--desktop-width);
+    width: var(--desktop-width);
+  }
 
   button {
     background: none;
@@ -12,10 +17,6 @@
     margin-left: 16px;
     margin-top: 16px;
     padding: 8px;
-
-    &:last-child {
-      margin-right: -8px;
-    }
 
     &.verification-steps__disabled {
       background-color: #c1c1c1;

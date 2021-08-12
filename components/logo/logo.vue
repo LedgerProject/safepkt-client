@@ -37,6 +37,6 @@ class Logo extends Vue {
 export default Logo
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import './logo.scss';
 </style>

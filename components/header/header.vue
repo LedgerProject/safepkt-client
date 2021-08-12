@@ -1,7 +1,12 @@
 <template>
-  <div class="head">
-    <Logo :source="logo" />
-    <h1>SafePKT</h1>
+  <div class="header">
+    <div class="header__first-row">
+      <Logo :source="logo" />
+      <h1 class="header__title">
+        SafePKT
+      </h1>
+    </div>
+    <p>Static analysis of rust-based smart contracts</p>
   </div>
 </template>
 

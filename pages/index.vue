@@ -1,7 +1,6 @@
 <template>
   <div class="homepage">
     <Header />
-    <p>Static analysis of rust-based smart contracts</p>
     <Editor />
     <VerificationSteps
       :can-upload-source="canUploadSource()"

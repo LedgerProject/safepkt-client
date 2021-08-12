@@ -1,10 +1,20 @@
-.head {
+.header {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   margin: auto;
-  width: var(--max-width);
+  width: 100vw;
 
-  h1 {
+  @media (min-width: $max-width) {
+    max-width: var(--desktop-width);
+    width: var(--desktop-width);
+  }
+
+  &__first-row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  &__title {
     display: flex;
     margin: auto;
     align-self: center;

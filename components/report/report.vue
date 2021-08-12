@@ -1,9 +1,8 @@
 <template>
-  <div class="report">
+  <div :class="getReportClasses()">
     <h2 v-text="title" />
     <textarea
       v-model="content"
-      :class="getReportClasses()"
       :disabled="!isReportVisible"
       class="report__content"
     />
@@ -35,7 +34,8 @@ export default class Report extends VerificationStepsMixin {
 
   getReportClasses () {
     return {
-      'report__content--hidden': !this.isReportVisible
+      report: true,
+      'report--hidden': !this.isReportVisible
     }
   }
 }

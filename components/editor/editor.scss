@@ -1,37 +1,60 @@
 
 .editor {
+  display: flex;
+  flex-direction: column;
   margin: auto;
-  width: var(--max-width);
+  width: 100vw;
+
+  @media (min-width: $max-width) {
+    max-width: var(--desktop-width);
+  }
 
   [for=project_name] {
     display: flex;
     font-size: 1em;
     justify-self: flex-start;
-    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
+
+    @media (min-width: $max-width) {
+      flex-direction: row;
+      align-items: center;
+      max-width: var(--max-width);
+    }
   }
 
   &__project-name {
-    border-radius: 8px;
+    border-radius: var(--space);
     border: 1px solid var(--border-color);
     font-size: 1em;
-    margin-left: 8px;
-    padding: 8px;
+    margin-top: var(--space);
+    padding: var(--space);
     width: 350px;
-    text-align: left;
+
+    @media (min-width: $max-width) {
+      max-width: var(--desktop-width);
+      margin-top: 0;
+      margin-left: var(--space);
+    }
   }
 
   &__inner-editor {
     background: #2d2d2d;
     color: #ccc;
-
     font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
     font-size: 14px;
     line-height: 1.5;
-    padding: 5px;
-    margin-top: 20px;
+    margin: 20px auto auto;
+    width: 100vw;
+
+    @media (min-width: $max-width) {
+      max-width: var(--desktop-width);
+      width: var(--desktop-width);
+    }
   }
 
   .prism-editor__textarea:focus {
     outline: none;
+    width: 100vh;
   }
 }

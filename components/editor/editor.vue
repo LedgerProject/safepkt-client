@@ -52,6 +52,6 @@ export default class Editor extends ProjectMixin {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import './editor.scss';
 </style>
