@@ -29,7 +29,7 @@ class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
   @VerificationStepsStore.Getter
   public nextStep!: () => NextVerificationStep
 
-  verificationStepReport (): string {
+  public get verificationStepReport (): string {
     if (!this.isProjectIdValid()) {
       return ''
     }

@@ -3,7 +3,7 @@
     <Header />
     <Editor />
     <Report
-      :content="verificationStepReport()"
+      :content="verificationStepReport"
       :title="reportTitle"
     />
     <UploadedProjects v-show="showUploadedProjects" />
