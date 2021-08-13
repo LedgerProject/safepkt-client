@@ -1,6 +1,6 @@
 SHELL:=/bin/bash
 
-.PHONY: help build start development-server
+.PHONY: help build development-server lint start test
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +16,9 @@ install-deps: ## Install JavaScript dependencies
 
 lint: ## Lint project files
 	@/bin/bash -c 'npm run lint'
+
+test: ## Run tests
+	@/bin/bash -c 'NODE_ENV=test npx jest'
 
 start: ## Start production server
 	@/bin/bash -c 'source .env && npx nuxt-ts start'

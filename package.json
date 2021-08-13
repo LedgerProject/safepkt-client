@@ -9,7 +9,8 @@
     "dev": "make development-server",
     "build": "make build",
     "start": "make start",
-    "lint": "eslint --fix --ext .ts,.js,.vue ."
+    "lint": "eslint --fix --ext .ts,.js,.vue .",
+    "test": "npm run test"
   },
   "dependencies": {
     "@nuxt/typescript-runtime": "^2.1.0",
@@ -25,6 +26,7 @@
     "vuex-persist": "^3.1.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.0",
     "@nuxt/types": "^2.15.7",
     "@nuxt/typescript": "^2.8.1",
     "@nuxt/typescript-build": "^2.1.0",
@@ -34,22 +36,48 @@
     "@nuxtjs/router": "^1.5.0",
     "@nuxtjs/style-resources": "^1.0.0",
     "@nuxtjs/svg": "^0.1.12",
+    "@types/jest": "^27.0.1",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
-    "@vue/test-utils": "^1.2.1",
+    "@vue/eslint-config-typescript": "^7.0.0",
+    "@vue/test-utils": "^1.2.2",
+    "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.1.0",
-    "babel-jest": "^27.0.5",
-    "eslint": "^7.27.0",
+    "babel-jest": "^27.0.6",
+    "babel-plugin-dynamic-import-node": "^2.3.3",
+    "babel-plugin-transform-decorators": "^6.24.1",
+    "eslint": "^7.32.0",
+    "eslint-config-google": "^0.14.0",
     "eslint-loader": "^4.0.2",
+    "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-typescript": "^0.14.0",
-    "eslint-plugin-vue": "^7.10.0",
-    "jest": "^27.0.5",
+    "eslint-plugin-vue": "^7.16.0",
+    "jest": "^27.0.6",
     "node-sass": "^5.0.0",
     "prettier": "^2.3.2",
     "sass-loader": "^10.2.0",
-    "ts-jest": "^27.0.3",
+    "ts-jest": "^27.0.4",
+    "typescript": "^4.3.5",
     "typescript-eslint-parser": "^22.0.0",
-    "vue-jest": "^3.0.4"
+    "vue-jest": "^3.0.7"
+  },
+  "jest": {
+    "testRegex": "**/tests/(*|(\\.|/)spec)\\.(jsx?|tsx?)$",
+    "moduleDirectories": [
+      "store"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "ts",
+      "json",
+      "vue"
+    ],
+    "transform": {
+      ".*\\.vue$": "vue-jest",
+      "^.+\\.ts?$": "ts-jest",
+      "^.+\\.js$": "babel-jest"
+    },
+    "testURL": "http://localhost"
   }
 }
