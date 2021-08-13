@@ -24,7 +24,7 @@
     <button
       :class="resetVerificationButtonClasses()"
       :disabled="!enableResetVerificationRuntimeButton"
-      @click="resetVerificationRuntime"
+      @click="resetRuntime"
     >
       ⚠️ Reset runtime
     </button>
@@ -36,6 +36,8 @@ import { Component, mixins, Prop } from 'nuxt-property-decorator'
 import UploadSourceMixin from '~/mixins/step/upload-source'
 import LlvmBitcodeGenerationMixin from '~/mixins/step/llvm-bitcode-generation'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
+import VerificationEvents from '~/modules/events'
+import EventBus from '~/modules/event-bus'
 
 @Component
 export default class VerificationSteps extends mixins(
@@ -89,6 +91,10 @@ export default class VerificationSteps extends mixins(
     if (!this.enableResetVerificationRuntimeButton) {
       return this.getDefaultDisabledButtonClass()
     }
+  }
+
+  resetRuntime (): void {
+    EventBus.$emit(VerificationEvents.resetVerificationRuntime)
   }
 
   getDefaultDisabledButtonClass () {
