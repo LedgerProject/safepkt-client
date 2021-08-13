@@ -7,6 +7,7 @@ import {
   verificationRuntimeStore,
   verificationStepsStore
 } from '~/store'
+import { ProjectNotFound } from '~/mixins/project'
 
 @Module({
   name: 'report',
@@ -21,12 +22,16 @@ class ReportStore extends VuexModule {
   get reportTitle (): string {
     let project: Project|null = null
 
-    if (typeof editorStore === 'undefined') {
+    if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
       return ''
     }
 
-    if (editorStore.isProjectIdValid()) {
+    try {
       project = verificationRuntimeStore.projectById(editorStore.projectId)
+    } catch (e) {
+      if (e instanceof ProjectNotFound) {
+        return ''
+      }
     }
 
     switch (true) {

@@ -18,7 +18,7 @@ import { HttpMethod, Routes } from '~/config'
 class SymbolicExecutionStore extends VuexModule {
   get canRunSymbolicExecutionStep (): () => boolean {
     return () => {
-      if (typeof editorStore !== 'undefined' && !editorStore.isProjectIdValid()) {
+      if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
         return false
       }
 
@@ -34,15 +34,16 @@ class SymbolicExecutionStore extends VuexModule {
   }
 
   @Action
-  public async runSymbolicExecution (project: Project) {
+  public async runSymbolicExecution ({ project, flags }: {project: Project, flags: string}) {
     const { baseUrl, routes }: { baseUrl: string, routes: Routes } = verificationRuntimeStore.routingParams
 
     const url = `${baseUrl}${routes.startSymbolicExecution.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.startSymbolicExecution.method
+    const body: BodyInit = JSON.stringify({ flags })
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, body))
       const json = await response.json()
 
       if (

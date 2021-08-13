@@ -13,7 +13,7 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
   public canRunSymbolicExecutionStep!: () => boolean
 
   @SymbolicExecutionStore.Action
-  public runSymbolicExecution!: (project : Project) => void
+  public runSymbolicExecution!: ({ project, flags }:{project : Project, flags: string}) => void
 
   @SymbolicExecutionStore.Action
   public pollSymbolicExecutionProgress!: (project: Project) => void
@@ -22,7 +22,10 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
   public pollSymbolicExecutionReport!: (project: Project) => void
 
   async tryToRunSymbolicExecution () {
-    await this.runSymbolicExecution(this.projectById(this.projectId))
+    await this.runSymbolicExecution({
+      project: this.projectById(this.projectId),
+      flags: this.flags
+    })
   }
 
   pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
