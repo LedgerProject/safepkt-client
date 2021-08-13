@@ -42,7 +42,6 @@ import 'prismjs/components/prism-rust'
 import 'prismjs/themes/prism-okaidia.css'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import UploadSourceMixin from '~/mixins/step/upload-source'
-import LlvmBitcodeGenerationMixin from '~/mixins/step/llvm-bitcode-generation'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 
 @Component({
@@ -50,7 +49,6 @@ import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 })
 export default class Editor extends mixins(
   UploadSourceMixin,
-  LlvmBitcodeGenerationMixin,
   SymbolicExecutionMixin
 ) {
   highlighter (source: string) {

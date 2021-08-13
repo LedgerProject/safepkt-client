@@ -1,16 +1,11 @@
 <template>
   <div class="verification-steps">
+    <!-- source upload and llvm bitcode generation
+         have been combined -->
     <button
       :class="uploadSourceButtonClasses()"
       :disabled="!enableUploadSourceButton"
       @click="tryToUploadSource"
-    >
-      Upload source code
-    </button>
-    <button
-      :class="generateLlvmBitcodeButtonClasses()"
-      :disabled="!enableGenerateLlvmBitcodeButton"
-      @click="tryToGenerateLlvmBitcode"
     >
       Generate LLVM bitcode
     </button>
@@ -34,7 +29,6 @@
 <script lang="ts">
 import { Component, mixins, Prop } from 'nuxt-property-decorator'
 import UploadSourceMixin from '~/mixins/step/upload-source'
-import LlvmBitcodeGenerationMixin from '~/mixins/step/llvm-bitcode-generation'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 import VerificationEvents from '~/modules/events'
 import EventBus from '~/modules/event-bus'
@@ -42,7 +36,6 @@ import EventBus from '~/modules/event-bus'
 @Component
 export default class VerificationSteps extends mixins(
   UploadSourceMixin,
-  LlvmBitcodeGenerationMixin,
   SymbolicExecutionMixin
 ) {
   @Prop({
@@ -76,9 +69,7 @@ export default class VerificationSteps extends mixins(
   }
 
   generateLlvmBitcodeButtonClasses () {
-    if (!this.enableGenerateLlvmBitcodeButton) {
-      return this.getDefaultDisabledButtonClass()
-    }
+    return this.getDefaultDisabledButtonClass()
   }
 
   symbolicExecutionButtonClasses () {

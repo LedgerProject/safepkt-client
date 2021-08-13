@@ -21,7 +21,6 @@ import UploadedProjects from '~/components/uploaded-projects/uploaded-projects.v
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import UploadSourceMixin from '~/mixins/step/upload-source'
-import LlvmBitcodeGenerationMixin from '~/mixins/step/llvm-bitcode-generation'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 
 const ReportStore = namespace('report')
@@ -32,7 +31,6 @@ const VerificationStepsStore = namespace('verification-steps')
 })
 export default class Homepage extends mixins(
   UploadSourceMixin,
-  LlvmBitcodeGenerationMixin,
   SymbolicExecutionMixin
 ) {
   showUploadedProjects: boolean = false
