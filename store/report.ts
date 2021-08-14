@@ -16,7 +16,7 @@ import { ProjectNotFound } from '~/mixins/project'
 })
 class ReportStore extends VuexModule {
   get isReportVisible (): boolean {
-    return verificationStepsStore.nextStep() !== Step.uploadSourceStep
+    return this.context.rootGetters['verification-steps/nextStep']() !== Step.uploadSourceStep
   }
 
   get reportTitle (): string {
@@ -29,9 +29,15 @@ class ReportStore extends VuexModule {
     try {
       project = verificationRuntimeStore.projectById(editorStore.projectId)
     } catch (e) {
-      if (e instanceof ProjectNotFound) {
-        return ''
+      if (!(e instanceof ProjectNotFound)) {
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
       }
+
+      return ''
     }
 
     switch (true) {

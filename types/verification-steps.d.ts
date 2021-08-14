@@ -1,13 +1,13 @@
 import {Project} from "~/types/project";
 
-type LLVMBitCodeGenerationStepProgress = 'llvmBitcodeGenerationStepProgress'
-type LLVMBitCodeGenerationStepReport = 'llvmBitcodeGenerationStepReport'
+type LLVMBitcodeGenerationStepProgress = 'llvmBitcodeGenerationStepProgress'
+type LLVMBitcodeGenerationStepReport = 'llvmBitcodeGenerationStepReport'
 type SymbolicExecutionStepProgress = 'symbolicExecutionStepProgress'
 type SymbolicExecutionStepReport = 'symbolicExecutionStepReport'
 
 type VerificationStepPollingTarget =
-    LLVMBitCodeGenerationStepProgress|
-    LLVMBitCodeGenerationStepReport|
+    LLVMBitcodeGenerationStepProgress|
+    LLVMBitcodeGenerationStepReport|
     SymbolicExecutionStepProgress|
     SymbolicExecutionStepReport
 

@@ -39,9 +39,6 @@ export default class Homepage extends mixins(
   reportTitle!: string
 
   @VerificationStepsStore.Mutation
-  unlockResetButton!: () => void
-
-  @VerificationStepsStore.Mutation
   lockResetButton!: () => void
 
   resetVerificationSteps () {
@@ -54,7 +51,6 @@ export default class Homepage extends mixins(
     this.startPollingLlvmBitcodeGenerationProgress()
     this.startPollingLlvmBitcodeGenerationReport()
     this.startPollingSymbolicExecutionProgress()
-    this.startPollingSymbolicExecutionReport()
   }
 
   created () {
@@ -63,10 +59,9 @@ export default class Homepage extends mixins(
     this.startPollingLlvmBitcodeGenerationProgress()
     this.startPollingLlvmBitcodeGenerationReport()
     this.startPollingSymbolicExecutionProgress()
-    this.startPollingSymbolicExecutionReport()
 
     EventBus.$on(VerificationEvents.resetVerificationRuntime, this.resetVerificationSteps)
-    EventBus.$on(VerificationEvents.failedVerificationStep, this.unlockResetButton)
+    EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
   }
 
   beforeDestroy () {
@@ -78,9 +73,6 @@ export default class Homepage extends mixins(
     }
     if (this.pollingSymbolicExecutionProgress) {
       clearInterval(this.pollingSymbolicExecutionProgress)
-    }
-    if (this.pollingSymbolicExecutionReport) {
-      clearInterval(this.pollingSymbolicExecutionReport)
     }
   }
 

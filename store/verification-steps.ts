@@ -1,4 +1,4 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import {
   editorStore,
   verificationRuntimeStore
@@ -12,6 +12,7 @@ import {
   InvalidVerificationStep,
   VerificationStep as Step
 } from '~/modules/verification-steps'
+import { ProjectNotFound } from '~/mixins/project'
 
 @Module({
   name: 'verification-steps',
@@ -35,6 +36,16 @@ export default class VerificationStepsStore extends VuexModule {
   @Mutation
   unlockResetButton (): void {
     this.lockedResetButton = false
+  }
+
+  @Action
+  reportError ({ error }: {error: Error}): void {
+    this.context.commit('unlockResetButton')
+    this.context.commit(
+      'verification-runtime/pushError',
+      { error },
+      { root: true }
+    )
   }
 
   get isResetButtonLocked (): boolean {
@@ -67,13 +78,25 @@ export default class VerificationStepsStore extends VuexModule {
         !this.canRunVerificationStep(Step.symbolicExecutionStep)
 
     if (noVerificationStepAvailable) {
-      if (!editorStore.isProjectIdValid()) {
+      if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
         return false
       }
 
-      const project = verificationRuntimeStore.projectById(
-        editorStore.projectId
-      )
+      let project: Project
+
+      try {
+        project = verificationRuntimeStore.projectById(editorStore.projectId)
+      } catch (e) {
+        if (!(e instanceof ProjectNotFound)) {
+          this.context.commit(
+            'verification-runtime/pushError',
+            { error: e },
+            { root: true }
+          )
+        }
+
+        return false
+      }
 
       const stepsHaveBeenCompleted = project.llvmBitcodeGenerationStepDone &&
           project.symbolicExecutionStepDone
@@ -109,7 +132,7 @@ export default class VerificationStepsStore extends VuexModule {
     }
   }
 
-  get isVerificationStepProgressCompleted (): VerificationStepAssertion {
+  get isVerificationStepProgressCompleted (): (project: Project, pollingTarget: VerificationStepPollingTarget) => VerificationStepAssertion {
     return (project: Project, pollingTarget: VerificationStepPollingTarget) => {
       return project[pollingTarget].raw_status &&
           project[pollingTarget].raw_status === Progress.completed
@@ -118,14 +141,12 @@ export default class VerificationStepsStore extends VuexModule {
 
   get isVerificationStepSuccessful (): VerificationStepAssertion {
     return (project: Project, pollingTarget: VerificationStepPollingTarget) => {
-      if (pollingTarget === PollingTarget.LLVMBitCodeGenerationStepReport) {
-        return project[pollingTarget].messages &&
-            project[pollingTarget].messages.includes('Wrote LLVM bitcode file')
+      if (pollingTarget === PollingTarget.LLVMBitcodeGenerationStepReport) {
+        return project.llvmBitcodeGenerationStepDone
       }
 
-      if (pollingTarget === PollingTarget.SymbolicExecutionStepReport) {
-        return project[pollingTarget].messages &&
-            project[pollingTarget].messages.includes('KLEE: done: generated tests =')
+      if (pollingTarget === PollingTarget.SymbolicExecutionStepProgress) {
+        return project.symbolicExecutionStepDone
       }
 
       throw new UnexpectedStep(`Sorry, pollingTarget ${pollingTarget} is unexpected.`)

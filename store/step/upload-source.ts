@@ -2,7 +2,6 @@ import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
 import { HttpMethod } from '~/config'
 import { Project } from '~/types/project'
-import { verificationRuntimeStore } from '~/store'
 import { VerificationStep } from '~/modules/verification-steps'
 
 @Module({
@@ -37,14 +36,14 @@ class UploadSourceStore extends VuexModule {
 
     @Action
     public async uploadSource ({ name, source }: {name: string, source: string }) {
-      const { baseUrl, routes } = verificationRuntimeStore.routingParams
+      const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
       const url = `${baseUrl}${routes.uploadSource.url}`
       const method: HttpMethod = routes.uploadSource.method
       const body: BodyInit = JSON.stringify({ source })
 
       try {
-        const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, body))
+        const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, body))
         const json = await response.json()
 
         if (

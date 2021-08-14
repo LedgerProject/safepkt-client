@@ -9,6 +9,7 @@ import { HttpMethod } from '~/config'
 import { VerificationStep as VerificationStepMod, VerificationStepProgress } from '~/modules/verification-steps'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
+import { ProjectNotFound } from '~/mixins/project'
 
 @Module({
   name: 'llvm-bitcode-generation',
@@ -16,16 +17,49 @@ import VerificationEvents from '~/modules/events'
   namespaced: true
 })
 class LlvmBitcodeGenerationStore extends VuexModule {
+  public get canRunLlvmBitcodeGenerationStep (): () => boolean {
+    return () => {
+      if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
+        return false
+      }
+
+      try {
+        const project = verificationRuntimeStore.projectById(editorStore.projectId)
+
+        return this.canGenerateLlvmBitcodeForProject({
+          project
+        })
+      } catch (e) {
+        if (!(e instanceof ProjectNotFound)) {
+          EventBus.$emit(VerificationEvents.failedVerificationStep, { error: e })
+        }
+
+        return false
+      }
+    }
+  }
+
+  get canGenerateLlvmBitcodeForProject (): ({ project }: {project: Project}) => boolean {
+    return ({ project }: {project: Project}) => {
+      const canDo = !project.llvmBitcodeGenerationStepStarted
+      if (typeof canDo === 'undefined') {
+        return false
+      }
+
+      return canDo
+    }
+  }
+
   @Action
   public async generateLlvmBitcode (project: Project) {
-    const { baseUrl, routes } = verificationRuntimeStore.routingParams
+    const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.startLLVMBitcodeGeneration.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.startLLVMBitcodeGeneration.method
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
       const json = await response.json()
 
       if (
@@ -71,14 +105,14 @@ class LlvmBitcodeGenerationStore extends VuexModule {
 
   @Action
   public async pollLlvmBitcodeGenerationProgress (project: Project) {
-    const { baseUrl, routes } = verificationRuntimeStore.routingParams
+    const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getLLVMBitcodeGenerationProgress.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getLLVMBitcodeGenerationProgress.method
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
       const json = await response.json()
 
       if (
@@ -115,19 +149,26 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         text: 'Sorry, something went wrong when trying to poll the LLVM bitcode generation progress.',
         type: 'error'
       })
+      if (!(e instanceof ProjectNotFound)) {
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
+      }
     }
   }
 
   @Action
   public async pollLlvmBitcodeGenerationReport (project: Project) {
-    const { baseUrl, routes } = verificationRuntimeStore.routingParams
+    const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getLLVMBitcodeGenerationReport.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getLLVMBitcodeGenerationReport.method
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
       const json = await response.json()
 
       if (
@@ -157,32 +198,14 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         text: 'Sorry, something went wrong when trying to poll the LLVM bitcode generation report.',
         type: 'error'
       })
-    }
-  }
-
-  public get canRunLlvmBitcodeGenerationStep (): () => boolean {
-    return () => {
-      if (typeof editorStore === 'undefined') {
-        return false
-      }
-
-      if (!editorStore.isProjectIdValid()) {
-        return false
-      }
-
-      try {
-        const project = verificationRuntimeStore.projectById(editorStore.projectId)
-        return this.canGenerateLlvmBitcodeForProject({
-          project
-        })
-      } catch (e) {
-        return false
+      if (!(e instanceof ProjectNotFound)) {
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
       }
     }
-  }
-
-  get canGenerateLlvmBitcodeForProject (): ({ project }: {project: Project}) => boolean {
-    return ({ project }: {project: Project}) => !project.llvmBitcodeGenerationStepStarted
   }
 }
 

@@ -1,5 +1,5 @@
 import { Component, mixins, namespace } from 'nuxt-property-decorator'
-import { VerificationStep, VerificationStepAssertion } from '~/types/verification-steps'
+import { VerificationStep, VerificationStepAssertion, VerificationStepPollingTarget } from '~/types/verification-steps'
 import { Project } from '~/types/project'
 import { VerificationStep as NextVerificationStep } from '~/modules/verification-steps'
 import VerificationRuntimeMixin from '~/mixins/verification-runtime'
@@ -21,13 +21,16 @@ class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
   public isVerificationStepSuccessful!: VerificationStepAssertion
 
   @VerificationStepsStore.Getter
-  public isVerificationStepProgressCompleted!: VerificationStepAssertion
+  public isVerificationStepProgressCompleted!: (project: Project, pollingTarget: VerificationStepPollingTarget) => VerificationStepAssertion
 
   @VerificationStepsStore.Getter
   public verificationStepReportGetter!: ({ project }: {project: Project}) => string;
 
   @VerificationStepsStore.Getter
   public nextStep!: () => NextVerificationStep
+
+  @VerificationStepsStore.Action
+  public reportError!: ({ error }: { error: Error }) => void
 
   public get verificationStepReport (): string {
     if (!this.isProjectIdValid()) {

@@ -4,6 +4,8 @@ import { VerificationStepPollingTarget } from '~/types/verification-steps'
 import { PollingTarget } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
 import VerificationStepsMixin from '~/mixins/verification-steps'
+import EventBus from '~/modules/event-bus'
+import VerificationEvents from '~/modules/events'
 
 const LlvmBitcodeGenerationStore = namespace('step/llvm-bitcode-generation')
 
@@ -24,7 +26,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
   pollingLlvmBitcodeGenerationProgress?: ReturnType<typeof setInterval>
 
   startPollingLlvmBitcodeGenerationProgress () {
-    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepProgress
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitcodeGenerationStepProgress
 
     this.pollingLlvmBitcodeGenerationProgress = setInterval(() => {
       let project: Project
@@ -48,6 +50,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
         if (e instanceof ProjectNotFound) {
           // expected behavior
         } else if (this.pollingLlvmBitcodeGenerationProgress) {
+          EventBus.$emit(VerificationEvents.failedVerificationStep, { error: e })
           clearInterval(this.pollingLlvmBitcodeGenerationProgress)
         }
       }
@@ -72,7 +75,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
   }
 
   startPollingLlvmBitcodeGenerationReport () {
-    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepReport
+    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitcodeGenerationStepReport
 
     this.pollingLlvmBitcodeGenerationReport = setInterval(() => {
       let project: Project
@@ -100,6 +103,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
         if (e instanceof ProjectNotFound) {
           // expected behavior
         } else if (this.pollingLlvmBitcodeGenerationReport) {
+          EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
           clearInterval(this.pollingLlvmBitcodeGenerationReport)
         }
       }
