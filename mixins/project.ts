@@ -21,12 +21,6 @@ class ProjectMixin extends Vue {
   projectName!: string
 
   @Editor.Getter
-  commandPreview!: string
-
-  @Editor.Getter
-  flags!: string
-
-  @Editor.Getter
   base64EncodedSource!: string
 
   @Editor.Mutation
@@ -34,9 +28,6 @@ class ProjectMixin extends Vue {
 
   @Editor.Mutation
   setProjectName!: (projectName: string) => void
-
-  @Editor.Mutation
-  setAdditionalFlags!: (flags: string) => void
 
   @Editor.Mutation
   setBase64EncodedSource!: (source: string) => void

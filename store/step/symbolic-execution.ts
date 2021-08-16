@@ -1,12 +1,19 @@
-import { Action, Module, VuexModule } from 'vuex-module-decorators'
+import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
-import { VerificationStepPollingTarget } from '~/types/verification-steps'
-import { PollingTarget, VerificationStepProgress } from '~/modules/verification-steps'
+import { VerificationStepProgress } from '~/modules/verification-steps'
 import { Project } from '~/types/project'
 import { HttpMethod, Routes } from '~/config'
 import { ProjectNotFound } from '~/mixins/project'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
+import { MUTATION_ADD_PROJECT } from '~/store/verification-runtime'
+import { stableStringify } from '~/modules/json'
+
+const ACTION_RESET_SYMBOLIC_EXECUTION = 'resetSymbolicExecution'
+
+export {
+  ACTION_RESET_SYMBOLIC_EXECUTION
+}
 
 @Module({
   name: 'symbolic-execution',
@@ -14,6 +21,12 @@ import VerificationEvents from '~/modules/events'
   namespaced: true
 })
 class SymbolicExecutionStore extends VuexModule {
+  commandFlags: string = ''
+
+  public get flags (): string {
+    return this.commandFlags.trim()
+  }
+
   public get canRunSymbolicExecutionStep (): () => boolean {
     return () => {
       let project: Project
@@ -25,10 +38,8 @@ class SymbolicExecutionStore extends VuexModule {
       try {
         const projectId = this.context.rootGetters['editor/projectId']
         project = this.context.rootGetters['verification-runtime/projectById'](projectId)
-        const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitcodeGenerationStepReport
 
         return project.llvmBitcodeGenerationStepDone &&
-            this.context.rootGetters['verification-steps/isVerificationStepSuccessful'](project, pollingTarget) &&
             !project.symbolicExecutionStepStarted // No symbolic execution has started
       } catch (e) {
         if (!(e instanceof ProjectNotFound)) {
@@ -38,6 +49,39 @@ class SymbolicExecutionStore extends VuexModule {
         return false
       }
     }
+  }
+
+  get commandPreview (): (projectId: string) => string {
+    return (projectId: string) => {
+      if (this.flags.length === 0) {
+        return `klee --libc=klee --silent-klee-assume --warnings-only-to-file ${projectId}.bc`
+      }
+
+      return `klee --libc=klee ${this.flags} ${projectId}.bc`
+    }
+  }
+
+  @Action
+  [ACTION_RESET_SYMBOLIC_EXECUTION] (project: Project): void {
+    const projectState: Project = {
+      ...project
+    }
+
+    projectState.symbolicExecutionStepStarted = false
+    projectState.symbolicExecutionStepProgress = {}
+    projectState.symbolicExecutionStepReport = {}
+    projectState.symbolicExecutionStepDone = false
+
+    this.context.commit(
+        `verification-runtime/${MUTATION_ADD_PROJECT}`,
+        projectState,
+        { root: true }
+    )
+  }
+
+  @Mutation
+  setAdditionalFlags (flags: string): void {
+    this.commandFlags = flags
   }
 
   @Action
@@ -55,7 +99,7 @@ class SymbolicExecutionStore extends VuexModule {
 
       if (
         typeof json.message === 'undefined' ||
-          !json.message
+          typeof json.error !== 'undefined'
       ) {
         Vue.notify({
           title: 'Warning',
@@ -77,7 +121,8 @@ class SymbolicExecutionStore extends VuexModule {
 
       const projectState: Project = {
         ...project,
-        symbolicExecutionStepStarted: true
+        symbolicExecutionStepStarted: true,
+        symbolicExecutionStepDone: false
       }
 
       this.context.commit(
@@ -86,11 +131,19 @@ class SymbolicExecutionStore extends VuexModule {
         { root: true }
       )
     } catch (e) {
-      Vue.notify({
-        title: 'Oops',
-        text: 'Sorry, something went wrong when trying to run the symbolic execution.',
-        type: 'error'
-      })
+      if (!(e instanceof ProjectNotFound)) {
+        Vue.notify({
+          title: 'Oops',
+          text: 'Sorry, something went wrong when trying to run the symbolic execution.',
+          type: 'error'
+        })
+
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
+      }
     }
   }
 
@@ -121,16 +174,30 @@ class SymbolicExecutionStore extends VuexModule {
         symbolicExecutionStepDone
       }
 
+      await this.context.dispatch('pollSymbolicExecutionReport', project)
+      projectState.symbolicExecutionStepReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
+
       if (symbolicExecutionStepDone) {
-        await this.context.dispatch('pollSymbolicExecutionReport', project)
-        projectState.symbolicExecutionStepReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
+        projectState.symbolicExecutionStepStarted = false
+        this.context.commit(
+          'verification-steps/unlockResetButton',
+          {},
+          { root: true }
+        )
       }
 
-      this.context.commit(
-        'verification-runtime/addProject',
-        projectState,
-        { root: true }
-      )
+      const currentProjectState = this.context.rootGetters['verification-runtime/projectById'](project.id)
+
+      if (
+        symbolicExecutionStepDone ||
+        stableStringify(currentProjectState) !== stableStringify(projectState)
+      ) {
+        this.context.commit(
+            `verification-runtime/${MUTATION_ADD_PROJECT}`,
+            projectState,
+            { root: true }
+        )
+      }
     } catch (e) {
       Vue.notify({
         title: 'Oops',
@@ -167,25 +234,26 @@ class SymbolicExecutionStore extends VuexModule {
       }
 
       const currentReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
-      if (!currentReport.messages || json.messages.trim() !== currentReport.messages.trim()) {
+      if (stableStringify(json) !== stableStringify(currentReport)) {
         const projectState: Project = {
           ...project,
           symbolicExecutionStepReport: json
         }
 
         this.context.commit(
-          'verification-runtime/addProject',
-          projectState,
-          { root: true }
+            `verification-runtime/${MUTATION_ADD_PROJECT}`,
+            projectState,
+            { root: true }
         )
       }
     } catch (e) {
-      Vue.notify({
-        title: 'Oops',
-        text: 'Sorry, something went wrong when trying to poll the symbolic execution report.',
-        type: 'error'
-      })
       if (!(e instanceof ProjectNotFound)) {
+        Vue.notify({
+          title: 'Oops',
+          text: 'Sorry, something went wrong when trying to poll the symbolic execution report.',
+          type: 'error'
+        })
+
         this.context.commit(
           'verification-runtime/pushError',
           { error: e },

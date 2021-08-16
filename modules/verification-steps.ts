@@ -16,12 +16,23 @@ export class PollingTarget {
 }
 
 export class VerificationStep {
-  static uploadSourceStep: Step = 'uploadSourceStep'
-  static llvmBitcodeGenerationStep: Step = 'llvmBitcodeGenerationStep'
-  static symbolicExecutionStep: Step = 'symbolicExecutionStep'
+  static uploadSourceStep: Step = 'uploadSource'
+  static llvmBitcodeGenerationStep: Step = 'llvmBitcodeGeneration'
+  static symbolicExecutionStep: Step = 'symbolicExecution'
+
+  get uploadSourceStep () {
+    return VerificationStep.uploadSourceStep
+  }
+
+  get llvmBitcodeGenerationStep () {
+    return VerificationStep.llvmBitcodeGenerationStep
+  }
+
+  get symbolicExecutionStep () {
+    return VerificationStep.symbolicExecutionStep
+  }
 }
 
-class InvalidVerificationStep extends Error {}
 class UnexpectedStep extends Error {}
 
-export { InvalidVerificationStep, UnexpectedStep }
+export { UnexpectedStep }

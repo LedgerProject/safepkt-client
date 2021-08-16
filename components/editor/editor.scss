@@ -23,49 +23,40 @@
   &__row {
     display: flex;
     flex-direction: row;
-    margin-top: var(--space);
-
-    &--wrapped {
-      flex-wrap: wrap;
-      flex-direction: column;
-      width: 100vw
-    }
   }
 
-  [for=project_name] {
+  [for=project-name] {
+    align-items: flex-start;
     display: flex;
     font-size: 1em;
-    justify-self: flex-start;
-    align-items: flex-start;
     flex-direction: column;
+    flex-wrap: wrap;
+    margin-bottom: var(--space);
+    justify-self: flex-start;
+    padding-top: var(--space);
 
     @media (min-width: $max-width) {
-      flex-direction: row;
       align-items: center;
     }
   }
 
-  &__preview,
-  &__flags,
+  &__label {
+    align-self: flex-start;
+    display: inline-flex;
+  }
+
   &__project-name {
     border-radius: var(--space);
     border: 1px solid var(--border-color);
     font-size: 1em;
     margin-top: var(--space);
+    margin-right: var(--space);
     padding: var(--space);
-    width: 350px;
+    width: var(--input-width);
 
     @media (min-width: $max-width) {
       max-width: var(--desktop-width);
-      margin-top: 0;
-      margin-left: var(--space);
     }
-  }
-
-  &__preview {
-    margin-left: 0;
-    margin-top: var(--space);
-    height: 76px;
   }
 
   &__inner-editor {
@@ -74,12 +65,14 @@
     font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
     font-size: 14px;
     line-height: 1.5;
-    margin: 20px auto auto;
+    margin: calc(2 * var(--space)) auto auto;
+    padding-bottom: var(--space);
+    padding-top: var(--space);
     width: 100vw;
+    max-width: var(--max-width);
 
     @media (min-width: $max-width) {
       max-width: var(--desktop-width);
-      width: var(--desktop-width);
     }
   }
 

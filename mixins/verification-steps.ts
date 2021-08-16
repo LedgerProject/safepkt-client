@@ -24,7 +24,7 @@ class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
   public isVerificationStepProgressCompleted!: (project: Project, pollingTarget: VerificationStepPollingTarget) => VerificationStepAssertion
 
   @VerificationStepsStore.Getter
-  public verificationStepReportGetter!: ({ project }: {project: Project}) => string;
+  public verificationStepReportGetter!: ({ project, step }: {project: Project, step: VerificationStep}) => string;
 
   @VerificationStepsStore.Getter
   public nextStep!: () => NextVerificationStep
@@ -32,22 +32,24 @@ class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
   @VerificationStepsStore.Action
   public reportError!: ({ error }: { error: Error }) => void
 
-  public get verificationStepReport (): string {
-    if (!this.isProjectIdValid()) {
-      return ''
-    }
+  public get verificationStepReport (): (step: VerificationStep) => string {
+    return (step: VerificationStep) => {
+      if (!this.isProjectIdValid()) {
+        return ''
+      }
 
-    try {
-      const project: Project = this.projectById(this.projectId)
-      return this.verificationStepReportGetter({ project })
-    } catch (e) {
-      this.logger.error(
-        e.message,
-        'index.vue',
-        { projectId: this.projectId }
-      )
+      try {
+        const project: Project = this.projectById(this.projectId)
+        return this.verificationStepReportGetter({ project, step })
+      } catch (e) {
+        this.logger.error(
+          e.message,
+          'index.vue',
+          { projectId: this.projectId }
+        )
 
-      return ''
+        return ''
+      }
     }
   }
 }

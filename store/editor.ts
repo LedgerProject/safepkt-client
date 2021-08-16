@@ -9,8 +9,7 @@ export default class EditorStore extends VuexModule {
   editor: {
     projectId: string,
     projectName: string,
-    base64EncodedSource: string,
-    flags: string
+    base64EncodedSource: string
   } = {
     projectId: '',
     projectName: 'KLEE :: multiplication demo',
@@ -27,8 +26,7 @@ fn main() {
     let r = a * b;
     verifier::assert!(1 <= r && r <= 1000000);
 }
-`),
-    flags: ''
+`)
   }
 
   @Mutation
@@ -46,29 +44,12 @@ fn main() {
     this.editor = { ...this.editor, projectName }
   }
 
-  @Mutation
-  setAdditionalFlags (flags: string): void {
-    this.editor = { ...this.editor, flags }
-  }
-
   get projectId (): string {
     return this.editor.projectId
   }
 
   get projectName (): string {
     return this.editor.projectName
-  }
-
-  get flags (): string {
-    return this.editor.flags.trim()
-  }
-
-  get commandPreview (): string {
-    if (this.flags.length === 0) {
-      return `klee --libc=klee --silent-klee-assume --warnings-only-to-file ${this.projectId}.bc`
-    }
-
-    return `klee --libc=klee ${this.flags} ${this.projectId}.bc`
   }
 
   get base64EncodedSource (): string {

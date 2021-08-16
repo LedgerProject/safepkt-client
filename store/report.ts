@@ -1,13 +1,6 @@
 import { Module, VuexModule } from 'vuex-module-decorators'
-import { Project } from '~/types/project'
-import { NoTitleFound } from '~/modules/report'
 import { VerificationStep as Step, VerificationStep } from '~/modules/verification-steps'
-import {
-  editorStore,
-  verificationRuntimeStore,
-  verificationStepsStore
-} from '~/store'
-import { ProjectNotFound } from '~/mixins/project'
+import { VerificationStep as VerificationStepType } from '~/types/verification-steps'
 
 @Module({
   name: 'report',
@@ -19,40 +12,21 @@ class ReportStore extends VuexModule {
     return this.context.rootGetters['verification-steps/nextStep']() !== Step.uploadSourceStep
   }
 
-  get reportTitle (): string {
-    let project: Project|null = null
+  get reportTitle (): (step: VerificationStepType) => string {
+    return (step: VerificationStepType) => {
+      switch (true) {
+        case step === VerificationStep.uploadSourceStep:
+          return 'Source upload'
 
-    if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
-      return ''
-    }
+        case step === VerificationStep.llvmBitcodeGenerationStep:
+          return 'LLVM bitcode generation report'
 
-    try {
-      project = verificationRuntimeStore.projectById(editorStore.projectId)
-    } catch (e) {
-      if (!(e instanceof ProjectNotFound)) {
-        this.context.commit(
-          'verification-runtime/pushError',
-          { error: e },
-          { root: true }
-        )
+        case step === VerificationStep.symbolicExecutionStep:
+          return 'Symbolic execution report'
+
+        default:
+          return ''
       }
-
-      return ''
-    }
-
-    switch (true) {
-      case verificationStepsStore.nextStep() === VerificationStep.uploadSourceStep:
-        return 'Source upload'
-
-      case verificationStepsStore.nextStep() === VerificationStep.llvmBitcodeGenerationStep ||
-      (project && !project.symbolicExecutionStepStarted):
-        return 'LLVM bitcode generation report'
-
-      case verificationStepsStore.nextStep() === VerificationStep.symbolicExecutionStep:
-        return 'Symbolic execution report'
-
-      default:
-        throw new NoTitleFound()
     }
   }
 }

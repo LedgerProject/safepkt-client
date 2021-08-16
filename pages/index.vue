@@ -3,8 +3,12 @@
     <Header />
     <Editor />
     <Report
-      :content="verificationStepReport"
-      :title="reportTitle"
+      :title="reportTitle('llvmBitcodeGeneration')"
+      :content="verificationStepReport('llvmBitcodeGeneration')"
+    />
+    <Report
+      :title="reportTitle('symbolicExecution')"
+      :content="verificationStepReport('symbolicExecution')"
     />
     <UploadedProjects v-show="showUploadedProjects" />
     <notifications position="bottom right" />
@@ -41,7 +45,7 @@ export default class Homepage extends mixins(
   @VerificationStepsStore.Mutation
   lockResetButton!: () => void
 
-  resetVerificationSteps () {
+  reset () {
     this.lockResetButton()
 
     this.resetVerificationRuntime()
@@ -49,27 +53,22 @@ export default class Homepage extends mixins(
     this.enableSourceUpload()
 
     this.startPollingLlvmBitcodeGenerationProgress()
-    this.startPollingLlvmBitcodeGenerationReport()
     this.startPollingSymbolicExecutionProgress()
   }
 
   created () {
-    this.resetVerificationRuntime()
+    this.reset()
 
     this.startPollingLlvmBitcodeGenerationProgress()
-    this.startPollingLlvmBitcodeGenerationReport()
     this.startPollingSymbolicExecutionProgress()
 
-    EventBus.$on(VerificationEvents.resetVerificationRuntime, this.resetVerificationSteps)
+    EventBus.$on(VerificationEvents.resetVerificationRuntime, this.reset)
     EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
   }
 
   beforeDestroy () {
     if (this.pollingLlvmBitcodeGenerationProgress) {
       clearInterval(this.pollingLlvmBitcodeGenerationProgress)
-    }
-    if (this.pollingLlvmBitcodeGenerationReport) {
-      clearInterval(this.pollingLlvmBitcodeGenerationReport)
     }
     if (this.pollingSymbolicExecutionProgress) {
       clearInterval(this.pollingSymbolicExecutionProgress)

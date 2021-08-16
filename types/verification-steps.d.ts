@@ -11,9 +11,9 @@ type VerificationStepPollingTarget =
     SymbolicExecutionStepProgress|
     SymbolicExecutionStepReport
 
-type UploadSourceStep = 'uploadSourceStep'
-type LLVMBitCodeGenerationStep = 'llvmBitcodeGenerationStep'
-type SymbolicExecutionStep = 'symbolicExecutionStep'
+type UploadSourceStep = 'uploadSource'
+type LLVMBitCodeGenerationStep = 'llvmBitcodeGeneration'
+type SymbolicExecutionStep = 'symbolicExecution'
 
 type VerificationStep =
     UploadSourceStep|

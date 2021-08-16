@@ -1,15 +1,10 @@
 import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
-import {
-  editorStore,
-  verificationRuntimeStore
-} from '~/store'
 import { Project } from '~/types/project'
 import { VerificationStep, VerificationStepAssertion, VerificationStepPollingTarget } from '~/types/verification-steps'
 import {
   PollingTarget,
   VerificationStepProgress as Progress,
   UnexpectedStep,
-  InvalidVerificationStep,
   VerificationStep as Step
 } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
@@ -48,10 +43,6 @@ export default class VerificationStepsStore extends VuexModule {
     )
   }
 
-  get isResetButtonLocked (): boolean {
-    return this.lockedResetButton
-  }
-
   get canRunVerificationStep (): (step: VerificationStep) => boolean {
     return (step: VerificationStep) => {
       let canDo = false
@@ -72,20 +63,30 @@ export default class VerificationStepsStore extends VuexModule {
     }
   }
 
-  get canResetVerificationRuntime (): boolean {
-    const noVerificationStepAvailable = !this.canRunVerificationStep(Step.uploadSourceStep) &&
-        !this.canRunVerificationStep(Step.llvmBitcodeGenerationStep) &&
-        !this.canRunVerificationStep(Step.symbolicExecutionStep)
+  get isResetButtonLocked (): boolean {
+    return this.lockedResetButton
+  }
 
-    if (noVerificationStepAvailable) {
-      if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
+  get isResetButtonUnlocked (): boolean {
+    return !this.isResetButtonLocked
+  }
+
+  get canResetVerificationRuntime (): boolean {
+    const noVerificationStepRemaining = !this.canRunVerificationStep(Step.uploadSourceStep) &&
+        !this.canRunVerificationStep(Step.llvmBitcodeGenerationStep)
+
+    if (noVerificationStepRemaining) {
+      if (!this.context.rootGetters['editor/isProjectIdValid']()) {
         return false
       }
 
-      let project: Project
-
       try {
-        project = verificationRuntimeStore.projectById(editorStore.projectId)
+        const project: Project|null = this.context.rootGetters['verification-runtime/currentProject']
+        if (project === null) {
+          return false
+        }
+
+        return project.llvmBitcodeGenerationStepDone && this.isResetButtonUnlocked
       } catch (e) {
         if (!(e instanceof ProjectNotFound)) {
           this.context.commit(
@@ -97,38 +98,30 @@ export default class VerificationStepsStore extends VuexModule {
 
         return false
       }
-
-      const stepsHaveBeenCompleted = project.llvmBitcodeGenerationStepDone &&
-          project.symbolicExecutionStepDone
-
-      if (!stepsHaveBeenCompleted && !this.lockedResetButton) {
-        return true
-      }
-
-      return stepsHaveBeenCompleted
     }
 
     return false
   }
 
-  get verificationStepReportGetter (): ({ project }: {project: Project}) => string {
-    return ({ project }: {project: Project}) => {
-      if (this.verificationStep === Step.uploadSourceStep) {
-        return ''
-      }
-
-      if (
-        this.verificationStep === Step.llvmBitcodeGenerationStep ||
-          !project.symbolicExecutionStepStarted
-      ) {
-        return project.llvmBitcodeGenerationStepReport.messages
-      }
-
-      if (this.verificationStep === Step.symbolicExecutionStep) {
+  get verificationStepReportGetter (): (
+    {
+      project,
+      step
+    }: {
+      project: Project,
+      step: VerificationStep
+    }
+  ) => string {
+    return ({ project, step }: {project: Project, step: VerificationStep}) => {
+      if (step === Step.symbolicExecutionStep) {
         return project.symbolicExecutionStepReport.messages
       }
 
-      throw new InvalidVerificationStep(`Invalid verification step: "${this.verificationStep}"`)
+      if (step === Step.llvmBitcodeGenerationStep) {
+        return project.llvmBitcodeGenerationStepReport.messages
+      }
+
+      return ''
     }
   }
 

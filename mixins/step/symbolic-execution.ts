@@ -6,23 +6,40 @@ import VerificationStepsMixin from '~/mixins/verification-steps'
 import { Project } from '~/types/project'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
+import { ACTION_RESET_SYMBOLIC_EXECUTION } from '~/store/step/symbolic-execution'
 
 const SymbolicExecutionStore = namespace('step/symbolic-execution')
 
 @Component
 class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
   @SymbolicExecutionStore.Getter
-  public canRunSymbolicExecutionStep!: () => boolean
+  commandPreview!: (projectId: string) => string
+
+  @SymbolicExecutionStore.Getter
+  flags!: string
+
+  @SymbolicExecutionStore.Getter
+  canRunSymbolicExecutionStep!: () => boolean
 
   @SymbolicExecutionStore.Action
-  public runSymbolicExecution!: ({ project, flags }:{project : Project, flags: string}) => void
+  runSymbolicExecution!: ({ project, flags }:{project : Project, flags: string}) => void
 
   @SymbolicExecutionStore.Action
-  public pollSymbolicExecutionProgress!: (project: Project) => void
+  pollSymbolicExecutionProgress!: (project: Project) => void
+
+  @SymbolicExecutionStore.Mutation
+  setAdditionalFlags!: (flags: string) => void
+
+  @SymbolicExecutionStore.Action
+  [ACTION_RESET_SYMBOLIC_EXECUTION]!: (project: Project) => void
 
   async tryToRunSymbolicExecution () {
+    const project = this.projectById(this.projectId)
+    this[ACTION_RESET_SYMBOLIC_EXECUTION](project)
+    this.startPollingSymbolicExecutionProgress()
+
     await this.runSymbolicExecution({
-      project: this.projectById(this.projectId),
+      project,
       flags: this.flags
     })
   }
@@ -39,7 +56,7 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
         project = this.projectById(this.projectId)
 
         if (
-          !project.llvmBitcodeGenerationStepStarted ||
+          project.llvmBitcodeGenerationStepStarted ||
           !project.llvmBitcodeGenerationStepDone ||
           !project.symbolicExecutionStepStarted
         ) {

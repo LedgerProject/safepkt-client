@@ -5,6 +5,16 @@ import {
   VerificationStep as VerificationStepMod
 } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
+import { ACTION_RESET_LLVM_BITCODE_GENERATION } from '~/store/step/llvm-bitcode-generation'
+import { ACTION_RESET_SYMBOLIC_EXECUTION } from '~/store/step/symbolic-execution'
+
+const ACTION_RESET_PROJECTS = 'resetProject'
+const MUTATION_ADD_PROJECT = 'addProject'
+
+export {
+  ACTION_RESET_PROJECTS,
+  MUTATION_ADD_PROJECT
+}
 
 @Module({
   name: 'verification-runtime',
@@ -26,36 +36,6 @@ export default class VerificationRuntimeStore extends VuexModule {
 
     this.projects = Object.keys(indexedProjects)
       .map(id => indexedProjects[id])
-  }
-
-  @Mutation
-  resetProjectState (): void {
-    if (
-      typeof this.projects === 'undefined' ||
-        !this.projects
-    ) {
-      return
-    }
-
-    const projects = Object.keys(this.projects).map((id: any) => {
-      const project = this.projects[id]
-
-      project.llvmBitcodeGenerationStepStarted = false
-      project.llvmBitcodeGenerationStepProgress = {}
-      project.llvmBitcodeGenerationStepReport = {}
-      project.llvmBitcodeGenerationStepDone = false
-
-      project.symbolicExecutionStepStarted = false
-      project.symbolicExecutionStepProgress = {}
-      project.symbolicExecutionStepReport = {}
-      project.symbolicExecutionStepDone = false
-
-      return {
-        ...project
-      }
-    })
-
-    this.projects = [...projects]
   }
 
   get allProjects (): Project[] {
@@ -80,7 +60,17 @@ export default class VerificationRuntimeStore extends VuexModule {
 
   @Mutation
   pushError ({ error }: {error: Error}) {
-    this.errors.push(error)
+    if (error) {
+      this.errors.push(error)
+    }
+  }
+
+  get lastError (): Error|null {
+    if (this.errors.length === 0) {
+      return null
+    }
+
+    return this.errors[this.errors.length - 1]
   }
 
   get getFetchRequestInit (): (method: HttpMethod, body: BodyInit|null) => RequestInit {
@@ -117,11 +107,52 @@ export default class VerificationRuntimeStore extends VuexModule {
     }
   }
 
+  get currentProject (): Project|null {
+    if (!this.context.rootGetters['editor/isProjectIdValid']()) {
+      return null
+    }
+
+    return this.projectById(this.context.rootGetters['editor/projectId'])
+  }
+
   get routingParams (): {baseUrl: string, routes: Routes} {
     return {
       baseUrl: Config.getBaseURL(),
       routes: Config.getRoutes()
     }
+  }
+
+  @Action
+  [ACTION_RESET_PROJECTS] (): void {
+    const allProjects = this.context.getters.allProjects
+
+    if (
+      typeof allProjects === 'undefined' ||
+        !allProjects
+    ) {
+      return
+    }
+
+    Object.keys([...allProjects])
+      .map((id: any) => {
+        const project = allProjects[id]
+
+        return {
+          ...project
+        }
+      })
+      .forEach((p: Project) => {
+        this.context.dispatch(
+          `step/llvm-bitcode-generation/${ACTION_RESET_LLVM_BITCODE_GENERATION}`,
+          p,
+          { root: true }
+        )
+        this.context.dispatch(
+          `step/symbolic-execution/${ACTION_RESET_SYMBOLIC_EXECUTION}`,
+          p,
+          { root: true }
+        )
+      })
   }
 
   @Action
@@ -141,6 +172,6 @@ export default class VerificationRuntimeStore extends VuexModule {
       VerificationStepMod.uploadSourceStep,
       { root: true }
     )
-    this.context.commit('resetProjectState')
+    this.context.dispatch(ACTION_RESET_PROJECTS)
   }
 }

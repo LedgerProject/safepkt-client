@@ -20,9 +20,6 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
   @LlvmBitcodeGenerationStore.Action
   public pollLlvmBitcodeGenerationProgress!: (project: Project) => void
 
-  @LlvmBitcodeGenerationStore.Action
-  public pollLlvmBitcodeGenerationReport!: (project: Project) => void
-
   pollingLlvmBitcodeGenerationProgress?: ReturnType<typeof setInterval>
 
   startPollingLlvmBitcodeGenerationProgress () {
@@ -59,55 +56,8 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
 
   pollingLlvmBitcodeGenerationReport?: ReturnType<typeof setInterval>
 
-  /** @throw ProjectNotFound */
-  canPollLlvmBitcodeGenerationReport () {
-    if (!this.isProjectIdValid()) {
-      return false
-    }
-
-    const project = this.projectById(this.projectId)
-
-    return project.llvmBitcodeGenerationStepStarted
-  }
-
   async tryToGenerateLlvmBitcode () {
     await this.generateLlvmBitcode(this.projectById(this.projectId))
-  }
-
-  startPollingLlvmBitcodeGenerationReport () {
-    const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitcodeGenerationStepReport
-
-    this.pollingLlvmBitcodeGenerationReport = setInterval(() => {
-      let project: Project
-
-      if (!this.canPollLlvmBitcodeGenerationReport()) {
-        return
-      }
-
-      try {
-        project = this.projectById(this.projectId)
-
-        if (!project.llvmBitcodeGenerationStepStarted) {
-          return
-        }
-
-        if (this.isVerificationStepSuccessful(project, pollingTarget)) {
-          if (this.pollingLlvmBitcodeGenerationReport) {
-            clearInterval(this.pollingLlvmBitcodeGenerationReport)
-          }
-          return
-        }
-
-        this.pollLlvmBitcodeGenerationReport(project)
-      } catch (e) {
-        if (e instanceof ProjectNotFound) {
-          // expected behavior
-        } else if (this.pollingLlvmBitcodeGenerationReport) {
-          EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
-          clearInterval(this.pollingLlvmBitcodeGenerationReport)
-        }
-      }
-    }, 1000)
   }
 }
 

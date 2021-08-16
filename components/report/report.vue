@@ -37,7 +37,7 @@ export default class Report extends VerificationStepsMixin {
   @ReportStore.Getter
   isReportVisible!: boolean
 
-  @Watch('verificationStepReport', { immediate: true, deep: true })
+  @Watch('content', { immediate: true, deep: true })
   onContentUpdated () {
     const content = this.$refs.content
     if (typeof content === 'undefined') {

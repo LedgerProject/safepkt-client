@@ -1,26 +1,56 @@
 
 .verification-steps {
   display: flex;
-  height: 50px;
-  margin: auto auto auto 0;
+  flex-direction: column;
+  // button border, height, margin and padding
+  min-height: calc(1em + 4 * var(--space) + 2px);
+  width: 100%;
 
   @media (min-width: $max-width) {
     align-self: flex-end;
   }
 
+  [for="additional-flags"],
+  [for="command-preview"] {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    font-size: 1em;
+    justify-self: flex-start;
+    width: 100%;
+    max-width: var(--max-width);
+
+    @media (min-width: $max-width) {
+      align-items: flex-start;
+    }
+  }
+
+  &__label {
+    align-self: flex-start;
+    display: inline-flex;
+  }
+
   button {
-    background: none;
+    background-color: transparent;
     border-radius: 4px;
     border: 1px solid var(--border-color);
     box-shadow: 2px 1px 1px black;
     font-size: 1em;
-    margin: auto;
+    font-weight: 600;
+    margin: 0 auto 0 var(--space);
+    margin-left: 0;
+    margin-top: var(--space);
+    margin-bottom: var(--space);
     padding: var(--space);
-    width: 250px;
+    width: calc(var(--input-width) + 2 * var(--space));
+
+    &:before {
+      content: "";
+      display: flex
+    }
 
     &.verification-steps__disabled {
       background-color: #c1c1c1;
-      display: none;
     }
 
     &:hover {
@@ -34,5 +64,53 @@
     &__clicked {
       background-color: #c1c1c1;
     }
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: row;
+
+    &--wrapped {
+      flex-wrap: wrap;
+      flex-direction: column;
+    }
+  }
+
+  &__inputs {
+    align-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+
+    @media (min-width: $max-width) {
+      flex-direction: row;
+    }
+  }
+
+  &__flags,
+  &__preview {
+    border-radius: var(--space);
+    border: 1px solid var(--border-color);
+    font-size: 1em;
+    margin-top: var(--space);
+    padding: var(--space);
+    width: var(--input-width);
+
+    @media (min-width: $max-width) {
+      max-width: var(--desktop-width);
+      margin-left: var(--space);
+    }
+  }
+
+  &__flags {
+    margin-left: 0;
+    margin-bottom: var(--space);
+  }
+
+  &__preview {
+    margin-left: 0;
+    height: calc(1em + 2 * var(--space) / 3);
+    width: 100%;
+    max-width: var(--max-width);
   }
 }

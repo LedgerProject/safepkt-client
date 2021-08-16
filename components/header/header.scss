@@ -9,7 +9,7 @@
     width: var(--desktop-width);
   }
 
-  &__first-row {
+  &__row {
     display: flex;
     flex-direction: row;
   }
@@ -18,6 +18,10 @@
     display: flex;
     margin: auto;
     align-self: center;
+  }
+
+  &__short-description {
+    margin-bottom: var(--space);
   }
 
   img {

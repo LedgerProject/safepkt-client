@@ -1,5 +1,31 @@
 <template>
   <div class="verification-steps">
+    <div class="verification-steps__row">
+      <label for="additional-flags">
+        <span class="verification-steps__label">Additional flags passed to symbolic execution command:</span>
+        <input
+          id="additional-flags"
+          class="verification-steps__flags"
+          :disabled="!enableRunSymbolicExecutionButton"
+          :value="flags"
+          maxlength="200"
+          type="text"
+          @input="amendAdditionalFlags"
+        >
+      </label>
+    </div>
+    <div class="verification-steps__row verification-steps__row--wrapped">
+      <label for="command-preview">
+        <span class="verification-steps__label">Symbolic execution command preview:</span>
+        <textarea
+          id="command-preview"
+          class="verification-steps__preview"
+          disabled="disabled"
+          maxlength="500"
+          v-text="symbolicExecutionCommandPreview"
+        />
+      </label>
+    </div>
     <!-- source upload and llvm bitcode generation
          have been combined -->
     <button
@@ -62,6 +88,10 @@ export default class VerificationSteps extends mixins(
   })
   enableResetVerificationRuntimeButton!: boolean;
 
+  get symbolicExecutionCommandPreview (): string {
+    return this.commandPreview(this.projectId)
+  }
+
   uploadSourceButtonClasses () {
     if (!this.enableUploadSourceButton) {
       return this.getDefaultDisabledButtonClass()
@@ -82,6 +112,10 @@ export default class VerificationSteps extends mixins(
     if (!this.enableResetVerificationRuntimeButton) {
       return this.getDefaultDisabledButtonClass()
     }
+  }
+
+  amendAdditionalFlags ({ target }: {target: {value: string}}) {
+    this.setAdditionalFlags(target.value)
   }
 
   resetRuntime (): void {
