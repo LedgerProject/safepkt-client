@@ -10,12 +10,25 @@
   }
 
   &__inputs {
+    align-content: flex-start;
     display: flex;
     flex-direction: column;
-    align-content: flex-start;
+    flex-wrap: wrap;
 
     @media (min-width: $max-width) {
       flex-direction: row;
+    }
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: row;
+    margin-top: var(--space);
+
+    &--wrapped {
+      flex-wrap: wrap;
+      flex-direction: column;
+      width: 100vw
     }
   }
 
@@ -32,6 +45,8 @@
     }
   }
 
+  &__preview,
+  &__flags,
   &__project-name {
     border-radius: var(--space);
     border: 1px solid var(--border-color);
@@ -45,6 +60,12 @@
       margin-top: 0;
       margin-left: var(--space);
     }
+  }
+
+  &__preview {
+    margin-left: 0;
+    margin-top: var(--space);
+    height: 76px;
   }
 
   &__inner-editor {

@@ -7,6 +7,7 @@ import {
   verificationRuntimeStore,
   verificationStepsStore
 } from '~/store'
+import { ProjectNotFound } from '~/mixins/project'
 
 @Module({
   name: 'report',
@@ -15,18 +16,28 @@ import {
 })
 class ReportStore extends VuexModule {
   get isReportVisible (): boolean {
-    return verificationStepsStore.nextStep() !== Step.uploadSourceStep
+    return this.context.rootGetters['verification-steps/nextStep']() !== Step.uploadSourceStep
   }
 
   get reportTitle (): string {
     let project: Project|null = null
 
-    if (typeof editorStore === 'undefined') {
+    if (typeof editorStore === 'undefined' || !editorStore.isProjectIdValid()) {
       return ''
     }
 
-    if (editorStore.isProjectIdValid()) {
+    try {
       project = verificationRuntimeStore.projectById(editorStore.projectId)
+    } catch (e) {
+      if (!(e instanceof ProjectNotFound)) {
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
+      }
+
+      return ''
     }
 
     switch (true) {

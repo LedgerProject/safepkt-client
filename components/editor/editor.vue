@@ -1,23 +1,58 @@
 <template>
   <div class="editor">
     <div class="editor__inputs">
-      <label for="project_name">
-        Project name:
-        <input
-          id="project_name"
-          :value="projectName"
-          maxlength="30"
-          class="editor__project-name"
-          type="text"
-          @input="amendProjectName"
+      <div class="editor__row">
+        <label for="project_name">
+          Project name:
+          <input
+            id="project_name"
+            :value="projectName"
+            maxlength="30"
+            class="editor__project-name"
+            type="text"
+            @input="amendProjectName"
+          >
+        </label>
+      </div>
+      <div class="editor__row">
+        <label
+          v-if="canRunVerificationStep('symbolicExecutionStep')"
+          for="additional-flags"
         >
-      </label>
-      <VerificationSteps
-        :enable-upload-source-button="canRunVerificationStep('uploadSourceStep')"
-        :enable-generate-llvm-bitcode-button="canRunVerificationStep('llvmBitcodeGenerationStep')"
-        :enable-run-symbolic-execution-button="canRunVerificationStep('symbolicExecutionStep')"
-        :enable-reset-verification-runtime-button="canResetVerificationRuntime"
-      />
+          Additional flags passed to klee command:
+          <input
+            id="additional-flags"
+            class="editor__flags"
+            :value="flags"
+            maxlength="200"
+            type="text"
+            @input="amendAdditionalFlags"
+          >
+        </label>
+      </div>
+      <div
+        v-if="canRunVerificationStep('symbolicExecutionStep')"
+        class="editor__row editor__row--wrapped"
+      >
+        <label for="command-preview">
+          Symbolic execution command preview:
+        </label>
+        <textarea
+          id="command-preview"
+          class="editor__preview"
+          disabled="disabled"
+          maxlength="500"
+          v-text="commandPreview"
+        />
+      </div>
+      <div class="editor__row">
+        <VerificationSteps
+          :enable-upload-source-button="canRunVerificationStep('uploadSourceStep')"
+          :enable-generate-llvm-bitcode-button="canRunVerificationStep('llvmBitcodeGenerationStep')"
+          :enable-run-symbolic-execution-button="canRunVerificationStep('symbolicExecutionStep')"
+          :enable-reset-verification-runtime-button="canResetVerificationRuntime"
+        />
+      </div>
     </div>
     <prism-editor
       :value="source"
@@ -61,6 +96,10 @@ export default class Editor extends mixins(
 
   amendProjectName ({ target }: {target: {value: string}}) {
     this.setProjectName(target.value)
+  }
+
+  amendAdditionalFlags ({ target }: {target: {value: string}}) {
+    this.setAdditionalFlags(target.value)
   }
 }
 </script>

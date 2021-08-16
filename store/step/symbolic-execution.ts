@@ -2,13 +2,11 @@ import { Action, Module, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
 import { VerificationStepPollingTarget } from '~/types/verification-steps'
 import { PollingTarget, VerificationStepProgress } from '~/modules/verification-steps'
-import {
-  editorStore,
-  verificationStepsStore,
-  verificationRuntimeStore
-} from '~/store'
 import { Project } from '~/types/project'
 import { HttpMethod, Routes } from '~/config'
+import { ProjectNotFound } from '~/mixins/project'
+import EventBus from '~/modules/event-bus'
+import VerificationEvents from '~/modules/events'
 
 @Module({
   name: 'symbolic-execution',
@@ -16,33 +14,43 @@ import { HttpMethod, Routes } from '~/config'
   namespaced: true
 })
 class SymbolicExecutionStore extends VuexModule {
-  get canRunSymbolicExecutionStep (): () => boolean {
+  public get canRunSymbolicExecutionStep (): () => boolean {
     return () => {
-      if (typeof editorStore !== 'undefined' && !editorStore.isProjectIdValid()) {
+      let project: Project
+
+      if (!this.context.rootGetters['editor/isProjectIdValid']()) {
         return false
       }
 
-      const project = verificationRuntimeStore.projectById(editorStore.projectId)
+      try {
+        const projectId = this.context.rootGetters['editor/projectId']
+        project = this.context.rootGetters['verification-runtime/projectById'](projectId)
+        const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitcodeGenerationStepReport
 
-      const pollingTarget: VerificationStepPollingTarget = PollingTarget.LLVMBitCodeGenerationStepReport
+        return project.llvmBitcodeGenerationStepDone &&
+            this.context.rootGetters['verification-steps/isVerificationStepSuccessful'](project, pollingTarget) &&
+            !project.symbolicExecutionStepStarted // No symbolic execution has started
+      } catch (e) {
+        if (!(e instanceof ProjectNotFound)) {
+          EventBus.$emit(VerificationEvents.failedVerificationStep, { error: e })
+        }
 
-      return project.llvmBitcodeGenerationStepDone &&
-          verificationStepsStore.isVerificationStepSuccessful(project, pollingTarget) &&
-          // No symbolic execution has started
-          !project.symbolicExecutionStepStarted
+        return false
+      }
     }
   }
 
   @Action
-  public async runSymbolicExecution (project: Project) {
-    const { baseUrl, routes }: { baseUrl: string, routes: Routes } = verificationRuntimeStore.routingParams
+  public async runSymbolicExecution ({ project, flags }: {project: Project, flags: string}) {
+    const { baseUrl, routes }: { baseUrl: string, routes: Routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.startSymbolicExecution.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.startSymbolicExecution.method
+    const body: BodyInit = JSON.stringify({ flags })
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, body))
       const json = await response.json()
 
       if (
@@ -88,14 +96,14 @@ class SymbolicExecutionStore extends VuexModule {
 
   @Action
   public async pollSymbolicExecutionProgress (project: Project) {
-    const { baseUrl, routes } = verificationRuntimeStore.routingParams
+    const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getSymbolicExecutionProgress.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getSymbolicExecutionProgress.method
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
       const json = await response.json()
 
       if (
@@ -113,6 +121,11 @@ class SymbolicExecutionStore extends VuexModule {
         symbolicExecutionStepDone
       }
 
+      if (symbolicExecutionStepDone) {
+        await this.context.dispatch('pollSymbolicExecutionReport', project)
+        projectState.symbolicExecutionStepReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
+      }
+
       this.context.commit(
         'verification-runtime/addProject',
         projectState,
@@ -124,19 +137,26 @@ class SymbolicExecutionStore extends VuexModule {
         text: 'Sorry, something went wrong when trying to poll the symbolic execution progress.',
         type: 'error'
       })
+      if (!(e instanceof ProjectNotFound)) {
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
+      }
     }
   }
 
   @Action
   public async pollSymbolicExecutionReport (project: Project) {
-    const { baseUrl, routes } = verificationRuntimeStore.routingParams
+    const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getSymbolicExecutionReport.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.getSymbolicExecutionReport.method
 
     try {
-      const response = await fetch(url, verificationRuntimeStore.getFetchRequestInit(method, null))
+      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
       const json = await response.json()
 
       if (
@@ -146,22 +166,32 @@ class SymbolicExecutionStore extends VuexModule {
         return
       }
 
-      const projectState: Project = {
-        ...project,
-        symbolicExecutionStepReport: json
-      }
+      const currentReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
+      if (!currentReport.messages || json.messages.trim() !== currentReport.messages.trim()) {
+        const projectState: Project = {
+          ...project,
+          symbolicExecutionStepReport: json
+        }
 
-      this.context.commit(
-        'verification-runtime/addProject',
-        projectState,
-        { root: true }
-      )
+        this.context.commit(
+          'verification-runtime/addProject',
+          projectState,
+          { root: true }
+        )
+      }
     } catch (e) {
       Vue.notify({
         title: 'Oops',
         text: 'Sorry, something went wrong when trying to poll the symbolic execution report.',
         type: 'error'
       })
+      if (!(e instanceof ProjectNotFound)) {
+        this.context.commit(
+          'verification-runtime/pushError',
+          { error: e },
+          { root: true }
+        )
+      }
     }
   }
 }

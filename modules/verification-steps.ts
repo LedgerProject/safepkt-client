@@ -10,10 +10,9 @@ export class VerificationStepProgress {
 }
 
 export class PollingTarget {
-  static LLVMBitCodeGenerationStepProgress: VerificationStepPollingTarget = 'llvmBitcodeGenerationStepProgress'
-  static LLVMBitCodeGenerationStepReport: VerificationStepPollingTarget = 'llvmBitcodeGenerationStepReport'
+  static LLVMBitcodeGenerationStepProgress: VerificationStepPollingTarget = 'llvmBitcodeGenerationStepProgress'
+  static LLVMBitcodeGenerationStepReport: VerificationStepPollingTarget = 'llvmBitcodeGenerationStepReport'
   static SymbolicExecutionStepProgress: VerificationStepPollingTarget = 'symbolicExecutionStepProgress'
-  static SymbolicExecutionStepReport: VerificationStepPollingTarget = 'symbolicExecutionStepReport'
 }
 
 export class VerificationStep {
