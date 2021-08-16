@@ -22,7 +22,13 @@
       />
     </div>
     <!-- See https://nuxtjs.org/docs/2.x/features/nuxt-components#the-client-only-component -->
-    <client-only placeholder="Loading...">
+    <client-only
+      v-if="canRunVerificationStep(steps.uploadSourceStep)"
+      placeholder="Loading..."
+    >
+      <h2 class="editor__title">
+        Source to be analyzed
+      </h2>
       <prism-editor
         :value="source"
         class="editor__inner-editor"

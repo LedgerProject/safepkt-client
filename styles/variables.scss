@@ -1,9 +1,14 @@
 :root {
-  --space: 8px;
-  --desktop-width: 952px;
-  --max-width: 768px;
   --border-color: #c1c1c1;
-  --input-width: 350px;
+  --desktop-width: 952px;
+  --header-height: 35px;
+  --input-width: 225px;
+  --max-width: 768px;
+  --space: 8px;
 }
 
 $max-width: 768px;
+
+body {
+  margin: 0 0 calc(3 * var(--space));
+}

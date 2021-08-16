@@ -1,8 +1,9 @@
 .logo {
-  height: 100px;
+  height: 70px;
+  margin-top: calc(-2 * var(--space));
 
   img {
-    height: 100px;
-    width: 100px;
+    height: 70px;
+    width: 70px;
   }
 }

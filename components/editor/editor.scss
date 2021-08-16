@@ -2,7 +2,7 @@
 .editor {
   display: flex;
   flex-direction: column;
-  margin: auto;
+  margin: calc(1.5 * var(--header-height)) auto auto;
   width: 100vw;
 
   @media (min-width: $max-width) {
@@ -14,6 +14,7 @@
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
+    width: 100%;
 
     @media (min-width: $max-width) {
       flex-direction: row;
@@ -32,12 +33,19 @@
     flex-direction: column;
     flex-wrap: wrap;
     margin-bottom: var(--space);
+    margin-left: var(--space);
     justify-self: flex-start;
     padding-top: var(--space);
 
     @media (min-width: $max-width) {
       align-items: center;
     }
+  }
+
+  &__title {
+    margin-top: var(--space);
+    margin-bottom: var(--space);
+    margin-left: var(--space);
   }
 
   &__label {
@@ -65,14 +73,14 @@
     font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
     font-size: 14px;
     line-height: 1.5;
-    margin: calc(2 * var(--space)) auto auto;
+    margin: calc(2 * var(--space)) auto auto var(--space);
     padding-bottom: var(--space);
     padding-top: var(--space);
-    width: 100vw;
-    max-width: var(--max-width);
+    width: calc(100vw - var(--space));
+    max-width: calc(var(--max-width) - var(--space));
 
     @media (min-width: $max-width) {
-      max-width: var(--desktop-width);
+      max-width: calc(var(--max-width) - var(--space));
     }
   }
 

@@ -1,6 +1,6 @@
 <template>
   <div class="homepage">
-    <Header />
+    <AppHeader />
     <Editor />
     <Report
       :title="reportTitle('llvmBitcodeGeneration')"
@@ -19,7 +19,7 @@
 import { Component, mixins, namespace } from 'nuxt-property-decorator'
 
 import Editor from '~/components/editor/editor.vue'
-import Head from '~/components/header/header.vue'
+import AppHeader from '~/components/app-header/app-header.vue'
 import Report from '~/components/report/report.vue'
 import UploadedProjects from '~/components/uploaded-projects/uploaded-projects.vue'
 import EventBus from '~/modules/event-bus'
@@ -31,7 +31,7 @@ const ReportStore = namespace('report')
 const VerificationStepsStore = namespace('verification-steps')
 
 @Component({
-  components: { Editor, Head, Report, UploadedProjects }
+  components: { AppHeader, Editor, Report, UploadedProjects }
 })
 export default class Homepage extends mixins(
   UploadSourceMixin,

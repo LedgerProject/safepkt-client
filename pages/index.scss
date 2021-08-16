@@ -2,9 +2,8 @@
   display: flex;
   flex-direction: column;
   margin: auto;
-  width: 100vw;
 
   @media (min-width: $max-width) {
-    max-width: var(--desktop-width);
+    max-width: var(--max-width);
   }
 }

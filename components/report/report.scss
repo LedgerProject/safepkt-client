@@ -2,11 +2,11 @@
 .report {
   display: flex;
   flex-direction: column;
-  margin: auto;
-  width: 100vw;
+  margin-left: var(--space);
+  width: calc(100vw - 2*var(--space));
 
   @media (min-width: $max-width) {
-    max-width: var(--desktop-width);
+    max-width: calc(var(--max-width) - var(--space));
   }
 
   &--hidden {

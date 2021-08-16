@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="logo">
     <img
       alt="PKT logo"
       class="logo__logo"
-      :height="width"
+      :height="side"
       :src="source"
-      :width="width"
+      :width="side"
     >
   </div>
 </template>
@@ -23,15 +23,9 @@ class Logo extends Vue {
 
   @Prop({
     type: Number,
-    default: 100
+    default: 75
   })
-  readonly height!: number;
-
-  @Prop({
-    type: Number,
-    default: 100
-  })
-  readonly width!: number;
+  readonly side!: number;
 }
 
 export default Logo

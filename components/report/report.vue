@@ -1,5 +1,8 @@
 <template>
-  <div :class="getReportClasses()">
+  <div
+    v-if="isReportVisible"
+    :class="getReportClasses()"
+  >
     <h2 v-text="title" />
     <textarea
       ref="content"
