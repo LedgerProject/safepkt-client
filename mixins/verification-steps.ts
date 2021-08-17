@@ -1,13 +1,22 @@
 import { Component, mixins, namespace } from 'nuxt-property-decorator'
-import { VerificationStep, VerificationStepAssertion, VerificationStepPollingTarget } from '~/types/verification-steps'
+import {
+  VerificationStep as VerificationStepType,
+  VerificationStep,
+  VerificationStepAssertion,
+  VerificationStepPollingTarget
+} from '~/types/verification-steps'
 import { Project } from '~/types/project'
 import { VerificationStep as NextVerificationStep } from '~/modules/verification-steps'
 import VerificationRuntimeMixin from '~/mixins/verification-runtime'
 
+const ReportStore = namespace('report')
 const VerificationStepsStore = namespace('verification-steps')
 
 @Component
 class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
+  @ReportStore.Getter
+  reportTitle!: (step: VerificationStepType) => string
+
   @VerificationStepsStore.Getter
   canRunVerificationStep!: (step: VerificationStep) => boolean
 

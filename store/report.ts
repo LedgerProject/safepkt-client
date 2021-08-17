@@ -12,13 +12,13 @@ class ReportStore extends VuexModule {
     return (step: VerificationStepType) => {
       switch (true) {
         case step === VerificationStep.uploadSourceStep:
-          return 'Source upload'
+          return 'I - Edit contract'
 
         case step === VerificationStep.llvmBitcodeGenerationStep:
-          return 'LLVM bitcode generation report'
+          return 'II - Generate LLVM Bitcode'
 
         case step === VerificationStep.symbolicExecutionStep:
-          return 'Symbolic execution report'
+          return 'III - Run symbolic execution'
 
         default:
           return ''

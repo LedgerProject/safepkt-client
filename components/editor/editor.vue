@@ -3,7 +3,7 @@
     <!-- See https://nuxtjs.org/docs/2.x/features/nuxt-components#the-client-only-component -->
     <client-only placeholder="Loading...">
       <h2 class="editor__title">
-        Source to be analyzed
+        {{ reportTitle(steps.uploadSourceStep) }}
         <font-awesome-icon
           class="editor__icon"
           :icon="showEditorIcon"
@@ -19,7 +19,7 @@
           class="editor__step-label"
           for="project-name"
         >
-          <span class="editor__label">Project:</span>
+          <span class="editor__label">Contract:</span>
           <input
             id="project-name"
             :value="projectName"

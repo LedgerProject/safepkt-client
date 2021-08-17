@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Watch, mixins, namespace } from 'nuxt-property-decorator'
+import { Component, Watch, mixins } from 'nuxt-property-decorator'
 import { Route } from 'vue-router/types/router'
 import AppHeader from '~/components/app-header/app-header.vue'
 import Editor from '~/components/editor/editor.vue'
@@ -48,8 +48,6 @@ import { UnexpectedStep, VerificationStep } from '~/modules/verification-steps'
 import SymbolicExecutionFlags from '~/components/symbolic-execution-flags/symbolic-execution-flags.vue'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import { VerificationStep as VerificationStepType } from '~/types/verification-steps'
-
-const ReportStore = namespace('report')
 
 @Component({
   components: {
@@ -68,9 +66,6 @@ export default class Homepage extends mixins(
   meta: any
   showUploadedProjects: boolean = false
   steps: VerificationStep = new VerificationStep()
-
-  @ReportStore.Getter
-  reportTitle!: (step: VerificationStepType) => string
 
   @Watch('$route')
   onRouteChange (newRoute?: Route) {
