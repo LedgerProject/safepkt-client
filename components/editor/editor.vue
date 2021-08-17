@@ -1,35 +1,37 @@
 <template>
   <div class="editor">
-    <div class="editor__inputs">
-      <div class="editor__row">
-        <label for="project-name">
-          <span class="editor__label">Project name:</span>
+    <!-- See https://nuxtjs.org/docs/2.x/features/nuxt-components#the-client-only-component -->
+    <client-only placeholder="Loading...">
+      <h2 class="editor__title">
+        Source to be analyzed
+        <font-awesome-icon
+          class="editor__icon"
+          :icon="showEditorIcon"
+          :title="showEditorIconTitle"
+          @click="toggleEditorVisibility"
+        />
+      </h2>
+      <div
+        v-if="isEditorVisible"
+        class="editor__row"
+      >
+        <label
+          class="editor__step-label"
+          for="project-name"
+        >
+          <span class="editor__label">Project:</span>
           <input
             id="project-name"
             :value="projectName"
-            maxlength="30"
             class="editor__project-name"
+            maxlength="30"
             type="text"
             @input="amendProjectName"
           >
         </label>
       </div>
-      <VerificationSteps
-        :enable-upload-source-button="canRunVerificationStep(steps.uploadSourceStep)"
-        :enable-generate-llvm-bitcode-button="canRunVerificationStep(steps.llvmBitcodeGenerationStep)"
-        :enable-run-symbolic-execution-button="canRunVerificationStep(steps.symbolicExecutionStep)"
-        :enable-reset-verification-runtime-button="canResetVerificationRuntime"
-      />
-    </div>
-    <!-- See https://nuxtjs.org/docs/2.x/features/nuxt-components#the-client-only-component -->
-    <client-only
-      v-if="canRunVerificationStep(steps.uploadSourceStep)"
-      placeholder="Loading..."
-    >
-      <h2 class="editor__title">
-        Source to be analyzed
-      </h2>
       <prism-editor
+        v-if="isEditorVisible"
         :value="source"
         class="editor__inner-editor"
         :highlight="highlighter"
@@ -42,7 +44,7 @@
 </template>
 
 <script lang="ts">
-import { Component, mixins } from 'nuxt-property-decorator'
+import { Component, Watch, mixins } from 'nuxt-property-decorator'
 
 import { PrismEditor } from 'vue-prism-editor'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
@@ -63,10 +65,40 @@ export default class Editor extends mixins(
   UploadSourceMixin,
   SymbolicExecutionMixin
 ) {
+  showEditorIcon: string = 'eye-slash';
+  showEditorIconTitle: string = 'Hide editor';
+
   steps: VerificationStep = new VerificationStep()
 
   created () {
     this.steps = new VerificationStep()
+  }
+
+  amendProjectName ({ target }: {target: {value: string}}) {
+    this.setProjectName(target.value)
+  }
+
+  @Watch('isEditorVisible', { deep: true, immediate: true })
+  onVisibilityUpdate (newVisibility: boolean) {
+    if (newVisibility) {
+      this.showEditorIcon = 'eye-slash'
+      this.showEditorIconTitle = 'Hide editor'
+
+      return
+    }
+
+    this.showEditorIcon = 'eye'
+    this.showEditorIconTitle = 'Show editor'
+  }
+
+  toggleEditorVisibility () {
+    if (this.isEditorVisible) {
+      this.hideEditor()
+
+      return
+    }
+
+    this.showEditor()
   }
 
   highlighter (source: string) {
@@ -75,10 +107,6 @@ export default class Editor extends mixins(
 
   get source (): string {
     return atob(this.base64EncodedSource)
-  }
-
-  amendProjectName ({ target }: {target: {value: string}}) {
-    this.setProjectName(target.value)
   }
 }
 </script>

@@ -2,7 +2,7 @@
 .editor {
   display: flex;
   flex-direction: column;
-  margin: calc(1.5 * var(--header-height)) auto auto;
+  margin: auto auto;
   width: 100vw;
 
   @media (min-width: $max-width) {
@@ -22,39 +22,26 @@
   }
 
   &__row {
-    display: flex;
-    flex-direction: row;
+    @extend .row;
+    margin-top: var(--space);
   }
 
-  [for=project-name] {
-    align-items: flex-start;
-    display: flex;
-    font-size: 1em;
-    flex-direction: column;
-    flex-wrap: wrap;
-    margin-bottom: var(--space);
-    margin-left: var(--space);
-    justify-self: flex-start;
-    padding-top: var(--space);
-
-    @media (min-width: $max-width) {
-      align-items: center;
-    }
+  [for="project-name"] {
+    @extend .label;
   }
 
   &__title {
-    margin-top: var(--space);
-    margin-bottom: var(--space);
-    margin-left: var(--space);
+    font-size: var(--font-size-title);
+    margin: calc(2 * var(--space)) 0 0 var(--space);
+    margin-top: 0;
   }
 
   &__label {
-    align-self: flex-start;
-    display: inline-flex;
+    @extend .inlined-label;
   }
 
   &__project-name {
-    border-radius: var(--space);
+    border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     font-size: 1em;
     margin-top: var(--space);
@@ -69,23 +56,27 @@
 
   &__inner-editor {
     background: #2d2d2d;
+    border-radius: var(--border-radius);
     color: #ccc;
     font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
     font-size: 14px;
     line-height: 1.5;
-    margin: calc(2 * var(--space)) auto auto var(--space);
+    margin-left: var(--space);
     padding-bottom: var(--space);
     padding-top: var(--space);
-    width: calc(100vw - var(--space));
-    max-width: calc(var(--max-width) - var(--space));
 
     @media (min-width: $max-width) {
       max-width: calc(var(--max-width) - var(--space));
+      width: calc(var(--max-width) - 4 * var(--space));
     }
   }
 
   .prism-editor__textarea:focus {
     outline: none;
     width: 100vh;
+  }
+
+  &__icon {
+    cursor: pointer;
   }
 }

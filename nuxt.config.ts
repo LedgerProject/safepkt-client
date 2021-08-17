@@ -1,15 +1,5 @@
 import { NuxtConfig } from '@nuxt/types'
 
-const twitter_handle = '@pkt_cash'
-const title = 'SafePKT'
-const description = 'Static analysis tools for rust-based smart contracts.'
-
-type Route = {
-  name: string,
-  path: string,
-  component: string,
-}
-
 const config: NuxtConfig = {
   pattern: '**/*.{vue,js}',
 
@@ -18,50 +8,6 @@ const config: NuxtConfig = {
 
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
-
-  // Global page headers: https://go.nuxtjs.dev/config-head
-  head: {
-    title,
-    htmlAttrs: {
-      lang: 'en'
-    },
-    meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: '' },
-      { hid: 'author', name: 'author', content: twitter_handle },
-      {
-        hid: 'og:url',
-        property: 'og:url',
-        content: 'https://pkt.cash'
-      },
-      {
-        hid: 'twitter:creator',
-        name: 'twitter:creator',
-        content: twitter_handle
-      },
-      {
-        hid: 'twitter:title',
-        name: 'twitter:title',
-        content: title
-      },
-      {
-        hid: 'twitter:description',
-        name: 'twitter:description',
-        content: description
-      },
-      { name: 'format-detection', content: 'telephone=no' }
-    ],
-    noscript: [
-      {
-        innerHTML:
-            'SafePKT requires JavaScript to work as intended.'
-      }
-    ],
-    link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-    ]
-  },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [
@@ -81,19 +27,29 @@ const config: NuxtConfig = {
     // https://go.nuxtjs.dev/typescript
     '@nuxt/typescript-build',
     '@nuxtjs/dotenv',
+    '@nuxtjs/fontawesome',
     '@nuxtjs/pwa',
     '@nuxtjs/router',
     '@nuxtjs/svg'
   ],
+
+  fontawesome: {
+    icons: {
+      solid: [
+        'faEye',
+        'faEyeSlash'
+      ]
+    }
+  },
 
   pwa: {
     icon: {
       source: '~/assets/safepkt.png'
     },
     manifest: {
-      name: title,
+      name: 'SafePKT',
       lang: 'fr',
-      short_name: title,
+      short_name: 'SafePKT',
       useWebmanifestExtension: false
     },
     meta: {
@@ -118,11 +74,28 @@ const config: NuxtConfig = {
   },
 
   router: {
-    extendRoutes (routes: Route[], resolve: (dir: string, path: string) => string): void {
+    extendRoutes (routes, resolve: (dir: string, path: string) => string): void {
       routes.push({
         name: 'homepage',
         path: '/',
-        component: resolve(__dirname, 'pages/index.vue')
+        component: resolve(__dirname, 'pages/index.vue'),
+        children: [
+          {
+            path: 'llvm-bitcode-generation/:projectId',
+            component: resolve(__dirname, 'pages/index.vue'),
+            name: 'llvm-bitcode-generation'
+          },
+          {
+            path: 'symbolic-execution/:projectId',
+            component: resolve(__dirname, 'pages/index.vue'),
+            name: 'symbolic-execution'
+          },
+          {
+            path: '*',
+            component: resolve(__dirname, 'pages/index.vue'),
+            name: 'not-found'
+          }
+        ]
       })
     }
   },

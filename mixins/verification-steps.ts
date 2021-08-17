@@ -9,30 +9,39 @@ const VerificationStepsStore = namespace('verification-steps')
 @Component
 class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
   @VerificationStepsStore.Getter
-  public canRunVerificationStep!: (step: VerificationStep) => boolean
+  canRunVerificationStep!: (step: VerificationStep) => boolean
 
   @VerificationStepsStore.Getter
-  public canResetVerificationRuntime!: boolean
+  canResetVerificationRuntime!: boolean
 
   @VerificationStepsStore.Getter
-  public isResetButtonLocked!: boolean
+  isResetButtonLocked!: boolean
 
   @VerificationStepsStore.Getter
-  public isVerificationStepSuccessful!: VerificationStepAssertion
+  isVerificationStepSuccessful!: VerificationStepAssertion
 
   @VerificationStepsStore.Getter
-  public isVerificationStepProgressCompleted!: (project: Project, pollingTarget: VerificationStepPollingTarget) => VerificationStepAssertion
+  isVerificationStepProgressCompleted!: (project: Project, pollingTarget: VerificationStepPollingTarget) => VerificationStepAssertion
 
   @VerificationStepsStore.Getter
-  public verificationStepReportGetter!: ({ project, step }: {project: Project, step: VerificationStep}) => string;
+  isVerificationStepReportVisible!: (step : VerificationStep) => boolean
 
   @VerificationStepsStore.Getter
-  public nextStep!: () => NextVerificationStep
+  nextStep!: () => NextVerificationStep
+
+  @VerificationStepsStore.Getter
+  verificationStepReportGetter!: ({ project, step }: {project: Project, step: VerificationStep}) => string;
+
+  @VerificationStepsStore.Getter
+  verificationStepReportVisibilityToggler!: (step : VerificationStep) => () => void
 
   @VerificationStepsStore.Action
-  public reportError!: ({ error }: { error: Error }) => void
+  reportError!: ({ error }: { error: Error }) => void
 
-  public get verificationStepReport (): (step: VerificationStep) => string {
+  @VerificationStepsStore.Action
+  toggleVerificationStepReportVisibility!: (step: VerificationStep) => void
+
+  get verificationStepReport (): (step: VerificationStep) => string {
     return (step: VerificationStep) => {
       if (!this.isProjectIdValid()) {
         return ''

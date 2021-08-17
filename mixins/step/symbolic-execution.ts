@@ -1,6 +1,6 @@
 import { Component, mixins, namespace } from 'nuxt-property-decorator'
 import { VerificationStepPollingTarget } from '~/types/verification-steps'
-import { PollingTarget } from '~/modules/verification-steps'
+import { PollingTarget, VerificationStep } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
 import VerificationStepsMixin from '~/mixins/verification-steps'
 import { Project } from '~/types/project'
@@ -16,10 +16,16 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
   commandPreview!: (projectId: string) => string
 
   @SymbolicExecutionStore.Getter
+  isSymbolicExecutionRunning!: boolean
+
+  @SymbolicExecutionStore.Getter
   flags!: string
 
   @SymbolicExecutionStore.Getter
   canRunSymbolicExecutionStep!: () => boolean
+
+  @SymbolicExecutionStore.Action
+  [ACTION_RESET_SYMBOLIC_EXECUTION]!: (project: Project) => void
 
   @SymbolicExecutionStore.Action
   runSymbolicExecution!: ({ project, flags }:{project : Project, flags: string}) => void
@@ -30,18 +36,15 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
   @SymbolicExecutionStore.Mutation
   setAdditionalFlags!: (flags: string) => void
 
-  @SymbolicExecutionStore.Action
-  [ACTION_RESET_SYMBOLIC_EXECUTION]!: (project: Project) => void
-
-  async tryToRunSymbolicExecution () {
-    const project = this.projectById(this.projectId)
-    this[ACTION_RESET_SYMBOLIC_EXECUTION](project)
-    this.startPollingSymbolicExecutionProgress()
-
-    await this.runSymbolicExecution({
-      project,
-      flags: this.flags
+  created () {
+    EventBus.$off(VerificationEvents.symbolicExecution)
+    EventBus.$on(VerificationEvents.symbolicExecution, () => {
+      this.toggleVerificationStepReportVisibility(VerificationStep.symbolicExecutionStep)
     })
+  }
+
+  beforeDestroyed () {
+    EventBus.$off(VerificationEvents.symbolicExecution)
   }
 
   pollingSymbolicExecutionProgress?: ReturnType<typeof setInterval>
@@ -57,8 +60,8 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
 
         if (
           project.llvmBitcodeGenerationStepStarted ||
-          !project.llvmBitcodeGenerationStepDone ||
-          !project.symbolicExecutionStepStarted
+            !project.llvmBitcodeGenerationStepDone ||
+            !project.symbolicExecutionStepStarted
         ) {
           // Early return when LLVM bitcode generation has not yet been started
           // nor it is done
@@ -82,6 +85,22 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
         }
       }
     }, 1000)
+  }
+
+  async tryToRunSymbolicExecution () {
+    this.$router.push({
+      name: 'symbolic-execution',
+      params: { projectId: this.projectId }
+    })
+
+    const project = this.projectById(this.projectId)
+    this[ACTION_RESET_SYMBOLIC_EXECUTION](project)
+    this.startPollingSymbolicExecutionProgress()
+
+    await this.runSymbolicExecution({
+      project,
+      flags: this.flags
+    })
   }
 }
 

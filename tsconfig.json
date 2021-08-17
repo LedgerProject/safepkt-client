@@ -25,9 +25,9 @@
     },
     "types": [
       "@nuxt/types",
+      "@nuxtjs/router",
       "@types/node",
-      "@types/jest",
-      "@nuxtjs/router"
+      "@types/jest"
     ],
     "typeRoots": ["types"]
   },

@@ -12,7 +12,7 @@ export default class EditorStore extends VuexModule {
     base64EncodedSource: string
   } = {
     projectId: '',
-    projectName: 'KLEE :: multiplication demo',
+    projectName: 'Multiplication',
     base64EncodedSource: btoa(`use verification_annotations::prelude::*;
 
 fn main() {
