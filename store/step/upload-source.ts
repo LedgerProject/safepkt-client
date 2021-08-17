@@ -3,6 +3,15 @@ import Vue from 'vue'
 import { HttpMethod } from '~/config'
 import { Project } from '~/types/project'
 import { VerificationStep } from '~/modules/verification-steps'
+import { MUTATION_SET_VERIFICATION_STEP } from '~/store/verification-steps'
+
+const MUTATION_HIDE_EDITOR = 'hideEditor'
+const MUTATION_SHOW_EDITOR = 'showEditor'
+
+export {
+  MUTATION_HIDE_EDITOR,
+  MUTATION_SHOW_EDITOR
+}
 
 @Module({
   name: 'upload-source',
@@ -11,18 +20,41 @@ import { VerificationStep } from '~/modules/verification-steps'
 })
 class UploadSourceStore extends VuexModule {
     step: {
-      enabledSourceUpload: boolean
+      enabledSourceUpload: boolean,
+      isEditorVisible: boolean
     } = {
-      enabledSourceUpload: true
+      enabledSourceUpload: true,
+      isEditorVisible: true
     }
 
-    public get canUploadSource (): () => boolean {
+    get canUploadSource (): () => boolean {
       return () => this.step.enabledSourceUpload
+    }
+
+    get isEditorVisible (): boolean {
+      return this.step.isEditorVisible
+    }
+
+    @Mutation
+    [MUTATION_HIDE_EDITOR] (): void {
+      this.step = {
+        ...this.step,
+        ...{ isEditorVisible: false }
+      }
+    }
+
+    @Mutation
+    [MUTATION_SHOW_EDITOR] (): void {
+      this.step = {
+        ...this.step,
+        ...{ isEditorVisible: true }
+      }
     }
 
     @Mutation
     enableSourceUpload (): void {
       this.step = {
+        ...this.step,
         ...{ enabledSourceUpload: true }
       }
     }
@@ -30,12 +62,13 @@ class UploadSourceStore extends VuexModule {
     @Mutation
     disableSourceUpload (): void {
       this.step = {
+        ...this.step,
         ...{ enabledSourceUpload: false }
       }
     }
 
     @Action
-    public async uploadSource ({ name, source }: {name: string, source: string }) {
+    async uploadSource ({ name, source }: {name: string, source: string }) {
       const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
       const url = `${baseUrl}${routes.uploadSource.url}`
@@ -91,7 +124,7 @@ class UploadSourceStore extends VuexModule {
           { root: true }
         )
         this.context.commit(
-          'verification-steps/setVerificationStep',
+          `verification-steps/${MUTATION_SET_VERIFICATION_STEP}`,
           VerificationStep.llvmBitcodeGenerationStep,
           { root: true }
         )

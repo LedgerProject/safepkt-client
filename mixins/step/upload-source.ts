@@ -6,13 +6,22 @@ const UploadSourceStore = namespace('step/upload-source')
 @Component
 class UploadSourceMixin extends mixins(LlvmBitcodeGenerationMixin) {
   @UploadSourceStore.Getter
-  public canUploadSource!: () => boolean
+  canUploadSource!: () => boolean
+
+  @UploadSourceStore.Getter
+  isEditorVisible!: boolean
 
   @UploadSourceStore.Mutation
-  public enableSourceUpload!: () => void
+  enableSourceUpload!: () => void
+
+  @UploadSourceStore.Mutation
+  hideEditor!: () => void
+
+  @UploadSourceStore.Mutation
+  showEditor!: () => void
 
   @UploadSourceStore.Action
-  public uploadSource!: ({ name, source }: {name: string, source: string }) => void
+  uploadSource!: ({ name, source }: {name: string, source: string }) => void
 
   async tryToUploadSource () {
     this.setProjectId({ projectId: '' })

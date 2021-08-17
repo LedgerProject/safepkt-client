@@ -1,13 +1,23 @@
 import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import { Project } from '~/types/project'
 import { VerificationStep, VerificationStepAssertion, VerificationStepPollingTarget } from '~/types/verification-steps'
+import EventBus from '~/modules/event-bus'
 import {
   PollingTarget,
-  VerificationStepProgress as Progress,
   UnexpectedStep,
+  VerificationStepProgress as Progress,
   VerificationStep as Step
 } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
+import { GETTER_IS_REPORT_VISIBLE as isLlvmBitcodeGenerationReportVisible, MUTATION_SHOW_REPORT as showLlvmBitcodeGenerationReport, MUTATION_HIDE_REPORT as hideLlvmBitcodeGenerationReport } from '~/store/step/llvm-bitcode-generation'
+import { GETTER_IS_REPORT_VISIBLE as isSymbolicExecutionReportVisible, MUTATION_SHOW_REPORT as showSymbolicExecutionReport, MUTATION_HIDE_REPORT as hideSymbolicExecutionReport } from '~/store/step/symbolic-execution'
+import VerificationEvents from '~/modules/events'
+
+const MUTATION_SET_VERIFICATION_STEP = 'setVerificationStep'
+
+export {
+  MUTATION_SET_VERIFICATION_STEP
+}
 
 @Module({
   name: 'verification-steps',
@@ -19,7 +29,7 @@ export default class VerificationStepsStore extends VuexModule {
   verificationStep: VerificationStep = Step.uploadSourceStep
 
   @Mutation
-  setVerificationStep (step: VerificationStep) {
+  [MUTATION_SET_VERIFICATION_STEP] (step: VerificationStep) {
     this.verificationStep = step
   }
 
@@ -125,6 +135,20 @@ export default class VerificationStepsStore extends VuexModule {
     }
   }
 
+  get isVerificationStepReportVisible (): (step: VerificationStep) => boolean {
+    return (step: VerificationStep) => {
+      if (step === Step.llvmBitcodeGenerationStep) {
+        return this.context.rootGetters[`step/llvm-bitcode-generation/${isLlvmBitcodeGenerationReportVisible}`]
+      }
+
+      if (step === Step.symbolicExecutionStep) {
+        return this.context.rootGetters[`step/symbolic-execution/${isSymbolicExecutionReportVisible}`]
+      }
+
+      throw new UnexpectedStep()
+    }
+  }
+
   get isVerificationStepProgressCompleted (): (project: Project, pollingTarget: VerificationStepPollingTarget) => VerificationStepAssertion {
     return (project: Project, pollingTarget: VerificationStepPollingTarget) => {
       return project[pollingTarget].raw_status &&
@@ -143,6 +167,63 @@ export default class VerificationStepsStore extends VuexModule {
       }
 
       throw new UnexpectedStep(`Sorry, pollingTarget ${pollingTarget} is unexpected.`)
+    }
+  }
+
+  @Action
+  toggleVerificationStepReportVisibility (step: VerificationStep) : void {
+    const isReportVisible = this.isVerificationStepReportVisible(step)
+
+    if (step === Step.llvmBitcodeGenerationStep) {
+      if (isReportVisible) {
+        this.context.commit(
+            `step/llvm-bitcode-generation/${hideLlvmBitcodeGenerationReport}`,
+            {},
+            { root: true }
+        )
+        return
+      }
+
+      this.context.commit(
+          `step/llvm-bitcode-generation/${showLlvmBitcodeGenerationReport}`,
+          {},
+          { root: true }
+      )
+      return
+    }
+
+    if (step === Step.symbolicExecutionStep) {
+      if (isReportVisible) {
+        this.context.commit(
+            `step/symbolic-execution/${hideSymbolicExecutionReport}`,
+            {},
+            { root: true }
+        )
+        return
+      }
+
+      this.context.commit(
+          `step/symbolic-execution/${showSymbolicExecutionReport}`,
+          {},
+          { root: true }
+      )
+      return
+    }
+
+    throw new UnexpectedStep('Can not toggle report visibility')
+  }
+
+  get verificationStepReportVisibilityToggler (): (step: VerificationStep) => () => void {
+    return (step: VerificationStep) => {
+      if (step === Step.llvmBitcodeGenerationStep) {
+        return () => EventBus.$emit(VerificationEvents.llvmBitcodeGeneration)
+      }
+
+      if (step === Step.symbolicExecutionStep) {
+        return () => EventBus.$emit(VerificationEvents.symbolicExecution)
+      }
+
+      throw new UnexpectedStep('Can not toggle report visibility')
     }
   }
 

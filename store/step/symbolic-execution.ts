@@ -8,11 +8,18 @@ import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import { MUTATION_ADD_PROJECT } from '~/store/verification-runtime'
 import { stableStringify } from '~/modules/json'
+import { MUTATION_HIDE_EDITOR } from '~/store/step/upload-source'
 
 const ACTION_RESET_SYMBOLIC_EXECUTION = 'resetSymbolicExecution'
+const GETTER_IS_REPORT_VISIBLE = 'isReportVisible'
+const MUTATION_HIDE_REPORT = 'hideReport'
+const MUTATION_SHOW_REPORT = 'showReport'
 
 export {
-  ACTION_RESET_SYMBOLIC_EXECUTION
+  ACTION_RESET_SYMBOLIC_EXECUTION,
+  GETTER_IS_REPORT_VISIBLE,
+  MUTATION_HIDE_REPORT,
+  MUTATION_SHOW_REPORT
 }
 
 @Module({
@@ -21,10 +28,68 @@ export {
   namespaced: true
 })
 class SymbolicExecutionStore extends VuexModule {
-  commandFlags: string = ''
+  step: {
+    commandFlags: string,
+    isReportVisible: boolean
+  } = {
+    commandFlags: '',
+    isReportVisible: false
+  }
 
-  public get flags (): string {
-    return this.commandFlags.trim()
+  get [GETTER_IS_REPORT_VISIBLE] (): boolean {
+    return this.step.isReportVisible
+  }
+
+  @Mutation
+  [MUTATION_HIDE_REPORT] (): void {
+    this.step = {
+      ...this.step,
+      isReportVisible: false
+    }
+  }
+
+  @Mutation
+  [MUTATION_SHOW_REPORT] (): void {
+    this.step = {
+      ...this.step,
+      isReportVisible: true
+    }
+  }
+
+  get flags (): string {
+    return this.step.commandFlags.trim()
+  }
+
+  get isSymbolicExecutionRunning (): boolean {
+    if (!this.context.rootGetters['editor/isProjectIdValid']()) {
+      return false
+    }
+
+    const project: Project|null = this.context.rootGetters['verification-runtime/currentProject']
+    if (project === null) {
+      return false
+    }
+
+    return project.symbolicExecutionStepStarted &&
+      !project.symbolicExecutionStepDone
+  }
+
+  get commandPreview (): (projectId: string) => string {
+    return (projectId: string) => {
+      if (this.flags.length === 0) {
+        return `klee --libc=klee --silent-klee-assume --warnings-only-to-file ${projectId}.bc`
+      }
+
+      return `klee --libc=klee ${this.flags} ${projectId}.bc`
+    }
+  }
+
+  @Mutation
+  setAdditionalFlags (flags: string): void {
+    this.step = {
+      ...this.step,
+      ...{ commandFlags: flags }
+    }
   }
 
   public get canRunSymbolicExecutionStep (): () => boolean {
@@ -51,16 +116,6 @@ class SymbolicExecutionStore extends VuexModule {
     }
   }
 
-  get commandPreview (): (projectId: string) => string {
-    return (projectId: string) => {
-      if (this.flags.length === 0) {
-        return `klee --libc=klee --silent-klee-assume --warnings-only-to-file ${projectId}.bc`
-      }
-
-      return `klee --libc=klee ${this.flags} ${projectId}.bc`
-    }
-  }
-
   @Action
   [ACTION_RESET_SYMBOLIC_EXECUTION] (project: Project): void {
     const projectState: Project = {
@@ -79,13 +134,8 @@ class SymbolicExecutionStore extends VuexModule {
     )
   }
 
-  @Mutation
-  setAdditionalFlags (flags: string): void {
-    this.commandFlags = flags
-  }
-
   @Action
-  public async runSymbolicExecution ({ project, flags }: {project: Project, flags: string}) {
+  async runSymbolicExecution ({ project, flags }: {project: Project, flags: string}) {
     const { baseUrl, routes }: { baseUrl: string, routes: Routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.startSymbolicExecution.url}`
@@ -94,6 +144,10 @@ class SymbolicExecutionStore extends VuexModule {
     const body: BodyInit = JSON.stringify({ flags })
 
     try {
+      this.context.commit(`step/upload-source/${MUTATION_HIDE_EDITOR}`, {}, { root: true })
+      this.context.commit(`step/llvm-bitcode-generation/${MUTATION_HIDE_REPORT}`, {}, { root: true })
+      this.context.commit(`${MUTATION_SHOW_REPORT}`)
+
       const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, body))
       const json = await response.json()
 
@@ -148,7 +202,7 @@ class SymbolicExecutionStore extends VuexModule {
   }
 
   @Action
-  public async pollSymbolicExecutionProgress (project: Project) {
+  async pollSymbolicExecutionProgress (project: Project) {
     const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getSymbolicExecutionProgress.url}`
@@ -215,7 +269,7 @@ class SymbolicExecutionStore extends VuexModule {
   }
 
   @Action
-  public async pollSymbolicExecutionReport (project: Project) {
+  async pollSymbolicExecutionReport (project: Project) {
     const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getSymbolicExecutionReport.url}`

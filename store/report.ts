@@ -1,5 +1,5 @@
 import { Module, VuexModule } from 'vuex-module-decorators'
-import { VerificationStep as Step, VerificationStep } from '~/modules/verification-steps'
+import { VerificationStep } from '~/modules/verification-steps'
 import { VerificationStep as VerificationStepType } from '~/types/verification-steps'
 
 @Module({
@@ -8,10 +8,6 @@ import { VerificationStep as VerificationStepType } from '~/types/verification-s
   namespaced: true
 })
 class ReportStore extends VuexModule {
-  get isReportVisible (): boolean {
-    return this.context.rootGetters['verification-steps/nextStep']() !== Step.uploadSourceStep
-  }
-
   get reportTitle (): (step: VerificationStepType) => string {
     return (step: VerificationStepType) => {
       switch (true) {

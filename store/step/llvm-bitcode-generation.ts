@@ -1,4 +1,4 @@
-import { Action, Module, VuexModule } from 'vuex-module-decorators'
+import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
 import { Project } from '~/types/project'
 import { HttpMethod } from '~/config'
@@ -8,11 +8,19 @@ import VerificationEvents from '~/modules/events'
 import { ProjectNotFound } from '~/mixins/project'
 import { stableStringify } from '~/modules/json'
 import { MUTATION_ADD_PROJECT } from '~/store/verification-runtime'
+import { MUTATION_SET_VERIFICATION_STEP } from '~/store/verification-steps'
+import { MUTATION_HIDE_EDITOR } from '~/store/step/upload-source'
 
 const ACTION_RESET_LLVM_BITCODE_GENERATION = 'resetLlvmBitcodeGeneration'
+const GETTER_IS_REPORT_VISIBLE = 'isReportVisible'
+const MUTATION_HIDE_REPORT = 'hideReport'
+const MUTATION_SHOW_REPORT = 'showReport'
 
 export {
-  ACTION_RESET_LLVM_BITCODE_GENERATION
+  ACTION_RESET_LLVM_BITCODE_GENERATION,
+  GETTER_IS_REPORT_VISIBLE,
+  MUTATION_HIDE_REPORT,
+  MUTATION_SHOW_REPORT
 }
 
 @Module({
@@ -21,6 +29,32 @@ export {
   namespaced: true
 })
 class LlvmBitcodeGenerationStore extends VuexModule {
+  step: {
+    isReportVisible: boolean
+  } = {
+    isReportVisible: false
+  }
+
+  get [GETTER_IS_REPORT_VISIBLE] (): boolean {
+    return this.step.isReportVisible
+  }
+
+  @Mutation
+  [MUTATION_HIDE_REPORT] (): void {
+    this.step = {
+      ...this.step,
+      isReportVisible: false
+    }
+  }
+
+  @Mutation
+  [MUTATION_SHOW_REPORT] (): void {
+    this.step = {
+      ...this.step,
+      isReportVisible: true
+    }
+  }
+
   public get canRunLlvmBitcodeGenerationStep (): () => boolean {
     return () => {
       if (!this.context.rootGetters['editor/isProjectIdValid']()) {
@@ -56,7 +90,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
   }
 
   @Action
-  public async generateLlvmBitcode (project: Project) {
+  async generateLlvmBitcode (project: Project) {
     const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.startLLVMBitcodeGeneration.url}`
@@ -64,6 +98,9 @@ class LlvmBitcodeGenerationStore extends VuexModule {
     const method: HttpMethod = routes.startLLVMBitcodeGeneration.method
 
     try {
+      this.context.commit(`step/upload-source/${MUTATION_HIDE_EDITOR}`, {}, { root: true })
+      this.context.commit(MUTATION_SHOW_REPORT)
+
       const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
       const json = await response.json()
 
@@ -117,7 +154,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
   }
 
   @Action
-  public async pollLlvmBitcodeGenerationProgress (project: Project) {
+  async pollLlvmBitcodeGenerationProgress (project: Project) {
     const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getLLVMBitcodeGenerationProgress.url}`
@@ -149,7 +186,12 @@ class LlvmBitcodeGenerationStore extends VuexModule {
       if (llvmBitcodeGenerationStepDone) {
         projectState.llvmBitcodeGenerationStepStarted = false
         this.context.commit(
-          'verification-steps/setVerificationStep',
+            `step/upload-source/${MUTATION_HIDE_EDITOR}`,
+            VerificationStep.symbolicExecutionStep,
+            { root: true }
+        )
+        this.context.commit(
+          `verification-steps/${MUTATION_SET_VERIFICATION_STEP}`,
           VerificationStep.symbolicExecutionStep,
           { root: true }
         )
@@ -181,7 +223,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
   }
 
   @Action
-  public async pollLlvmBitcodeGenerationReport (project: Project) {
+  async pollLlvmBitcodeGenerationReport (project: Project) {
     const { baseUrl, routes } = this.context.rootGetters['verification-runtime/routingParams']
 
     const url = `${baseUrl}${routes.getLLVMBitcodeGenerationReport.url}`
