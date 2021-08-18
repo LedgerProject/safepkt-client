@@ -70,6 +70,8 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
   pollingLlvmBitcodeGenerationReport?: ReturnType<typeof setInterval>
 
   async tryToGenerateLlvmBitcode () {
+    this.startPollingLlvmBitcodeGenerationProgress()
+
     await this.generateLlvmBitcode(this[GETTER_ACTIVE_PROJECT])
     this.$router.push({
       name: 'llvm-bitcode-generation',

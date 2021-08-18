@@ -2,7 +2,7 @@
   <div :class="getReportClasses()">
     <h2 class="report__title">
       {{ title }}
-      <fa-icon
+      <font-awesome-icon
         class="report__icon"
         :icon="icon"
         :title="titleIcon"

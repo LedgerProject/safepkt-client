@@ -88,8 +88,6 @@ export default class Homepage extends mixins(
   created () {
     this.steps = new VerificationStep()
 
-    this.reset()
-
     EventBus.$off(AppEvents.clearHistoryRequested)
     EventBus.$off(VerificationEvents.failedVerificationStep)
     EventBus.$off(VerificationEvents.resetVerificationRuntime)
@@ -97,6 +95,8 @@ export default class Homepage extends mixins(
     EventBus.$on(AppEvents.clearHistoryRequested, this.clearHistory)
     EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
     EventBus.$on(VerificationEvents.resetVerificationRuntime, this.reset)
+
+    EventBus.$emit(VerificationEvents.resetVerificationRuntime)
   }
 
   clearHistory () {

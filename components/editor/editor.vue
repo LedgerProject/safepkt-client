@@ -4,7 +4,7 @@
     <client-only placeholder="Loading...">
       <h2 class="editor__title">
         {{ reportTitle(steps.uploadSourceStep) }}
-        <fa-icon
+        <font-awesome-icon
           class="editor__icon"
           :icon="showEditorIcon"
           :title="showEditorIconTitle"

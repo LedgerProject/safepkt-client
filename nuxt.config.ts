@@ -35,7 +35,6 @@ const config: NuxtConfig = {
   ],
 
   fontawesome: {
-    component: 'fa',
     icons: {
       solid: [
         'faEye',

@@ -1,11 +1,11 @@
 <template>
   <div v-if="!isHistoryEmpty" class="history">
     <h2 class="history__title">
-      <fa-icon icon="hourglass" />
+      <font-awesome-icon icon="hourglass" />
       Revisions
     </h2>
     <label for="trash">
-      <fa-icon class="history__trash-icon" icon="trash" />
+      <font-awesome-icon class="history__trash-icon" icon="trash" />
       <button
         id="trash"
         class="history__button"
@@ -21,7 +21,7 @@
         :class="revisionClasses(project)"
         @click="revertTo({revision: project.revision})"
       >
-        <fa-icon
+        <font-awesome-icon
           class="history__icon"
           icon="history"
         />
