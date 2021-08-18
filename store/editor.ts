@@ -1,5 +1,19 @@
 import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
 
+const GETTER_PROJECT_ID = 'projectId'
+const GETTER_PROJECT_REVISION = 'projectRevision'
+const MUTATION_SET_BASE64_ENCODED_SOURCE = 'setBase64EncodedSource'
+const MUTATION_SET_PROJECT_ID = 'setProjectId'
+const MUTATION_SET_PROJECT_NAME = 'setProjectName'
+
+export {
+  GETTER_PROJECT_ID,
+  GETTER_PROJECT_REVISION,
+  MUTATION_SET_BASE64_ENCODED_SOURCE,
+  MUTATION_SET_PROJECT_ID,
+  MUTATION_SET_PROJECT_NAME
+}
+
 @Module({
   name: 'editor',
   stateFactory: true,
@@ -8,10 +22,12 @@ import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
 export default class EditorStore extends VuexModule {
   editor: {
     projectId: string,
+    projectRevision: number,
     projectName: string,
     base64EncodedSource: string
   } = {
     projectId: '',
+    projectRevision: 0,
     projectName: 'Multiplication',
     base64EncodedSource: btoa(`use verification_annotations::prelude::*;
 
@@ -30,22 +46,47 @@ fn main() {
   }
 
   @Mutation
-  setBase64EncodedSource (source: string): void {
+  [MUTATION_SET_BASE64_ENCODED_SOURCE] (source: string): void {
     this.editor = { ...this.editor, base64EncodedSource: btoa(source) }
   }
 
   @Mutation
-  setProjectId ({ projectId }: {projectId: string}): void {
-    this.editor = { ...this.editor, projectId }
+  [MUTATION_SET_PROJECT_ID] (
+    {
+      projectId,
+      revision
+    }: {
+      projectId: string,
+      revision: number
+    }
+  ): void {
+    if (!projectId || projectId.trim().length === 0) {
+      return
+    }
+
+    let projectRevision = (new Date()).getTime()
+    if (revision > 0) {
+      projectRevision = revision
+    }
+
+    this.editor = {
+      ...this.editor,
+      projectId,
+      projectRevision
+    }
   }
 
   @Mutation
-  setProjectName (projectName: string): void {
+  [MUTATION_SET_PROJECT_NAME] (projectName: string): void {
     this.editor = { ...this.editor, projectName }
   }
 
-  get projectId (): string {
+  get [GETTER_PROJECT_ID] (): string {
     return this.editor.projectId
+  }
+
+  get [GETTER_PROJECT_REVISION] (): number {
+    return this.editor.projectRevision
   }
 
   get projectName (): string {

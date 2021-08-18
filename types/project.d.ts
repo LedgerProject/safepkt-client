@@ -1,6 +1,7 @@
 
 type Project = {
     id: string,
+    revision: number,
     source: string,
     name: string,
     llvmBitcodeGenerationStepStarted: boolean,

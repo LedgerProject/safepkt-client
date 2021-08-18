@@ -7,6 +7,7 @@ import { Project } from '~/types/project'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import { ACTION_RESET_SYMBOLIC_EXECUTION } from '~/store/step/symbolic-execution'
+import { GETTER_ACTIVE_PROJECT } from '~/store/verification-runtime'
 
 const SymbolicExecutionStore = namespace('step/symbolic-execution')
 
@@ -56,7 +57,7 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
       let project: Project
 
       try {
-        project = this.projectById(this.projectId)
+        project = this[GETTER_ACTIVE_PROJECT]
 
         if (
           project.llvmBitcodeGenerationStepStarted ||
@@ -93,7 +94,7 @@ class SymbolicExecutionMixin extends mixins(VerificationStepsMixin) {
       params: { projectId: this.projectId }
     })
 
-    const project = this.projectById(this.projectId)
+    const project: Project = this[GETTER_ACTIVE_PROJECT]
     this[ACTION_RESET_SYMBOLIC_EXECUTION](project)
     this.startPollingSymbolicExecutionProgress()
 

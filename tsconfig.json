@@ -25,6 +25,7 @@
     },
     "types": [
       "@nuxt/types",
+      "@nuxtjs/date-fns",
       "@nuxtjs/router",
       "@types/node",
       "@types/jest"

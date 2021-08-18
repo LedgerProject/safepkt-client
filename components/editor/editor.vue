@@ -4,7 +4,7 @@
     <client-only placeholder="Loading...">
       <h2 class="editor__title">
         {{ reportTitle(steps.uploadSourceStep) }}
-        <font-awesome-icon
+        <fa-icon
           class="editor__icon"
           :icon="showEditorIcon"
           :title="showEditorIconTitle"
@@ -36,10 +36,9 @@
         class="editor__inner-editor"
         :highlight="highlighter"
         line-numbers
-        @input="setBase64EncodedSource"
+        @input="setSource"
       />
     </client-only>
-    <input v-model="projectId" type="hidden">
   </div>
 </template>
 
@@ -57,6 +56,10 @@ import { VerificationStep } from '~/modules/verification-steps'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import UploadSourceMixin from '~/mixins/step/upload-source'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
+import {
+  MUTATION_SET_BASE64_ENCODED_SOURCE,
+  MUTATION_SET_PROJECT_NAME
+} from '~/store/editor'
 
 @Component({
   components: { PrismEditor, VerificationSteps }
@@ -75,7 +78,11 @@ export default class Editor extends mixins(
   }
 
   amendProjectName ({ target }: {target: {value: string}}) {
-    this.setProjectName(target.value)
+    this[MUTATION_SET_PROJECT_NAME](target.value)
+  }
+
+  setSource (input: string) {
+    this[MUTATION_SET_BASE64_ENCODED_SOURCE](input)
   }
 
   @Watch('isEditorVisible', { deep: true, immediate: true })
@@ -91,6 +98,10 @@ export default class Editor extends mixins(
     this.showEditorIconTitle = 'Show editor'
   }
 
+  highlighter (source: string) {
+    return highlight(source, languages.rust)
+  }
+
   toggleEditorVisibility () {
     if (this.isEditorVisible) {
       this.hideEditor()
@@ -99,10 +110,6 @@ export default class Editor extends mixins(
     }
 
     this.showEditor()
-  }
-
-  highlighter (source: string) {
-    return highlight(source, languages.rust)
   }
 
   get source (): string {

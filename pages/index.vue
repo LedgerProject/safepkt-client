@@ -27,78 +27,56 @@
           v-if="isVerificationStepReportVisible('symbolicExecution')"
         />
       </Report>
-      <UploadedProjects v-show="showUploadedProjects" />
+      <History v-show="showHistory" />
       <notifications position="bottom right" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Watch, mixins } from 'nuxt-property-decorator'
-import { Route } from 'vue-router/types/router'
+import { Component, mixins, namespace } from 'nuxt-property-decorator'
 import AppHeader from '~/components/app-header/app-header.vue'
 import Editor from '~/components/editor/editor.vue'
+import History from '~/components/history/history.vue'
 import Report from '~/components/report/report.vue'
-import UploadedProjects from '~/components/uploaded-projects/uploaded-projects.vue'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 import UploadSourceMixin from '~/mixins/step/upload-source'
 import EventBus from '~/modules/event-bus'
-import VerificationEvents from '~/modules/events'
+import VerificationEvents, { AppEvents } from '~/modules/events'
 import { UnexpectedStep, VerificationStep } from '~/modules/verification-steps'
 import SymbolicExecutionFlags from '~/components/symbolic-execution-flags/symbolic-execution-flags.vue'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import { VerificationStep as VerificationStepType } from '~/types/verification-steps'
+import MetaMixin from '~/mixins/meta'
+
+const VerificationRuntime = namespace('verification-runtime')
 
 @Component({
   components: {
     AppHeader,
     Editor,
+    History,
     Report,
     SymbolicExecutionFlags,
-    UploadedProjects,
     VerificationSteps
   }
 })
 export default class Homepage extends mixins(
+  MetaMixin,
   UploadSourceMixin,
   SymbolicExecutionMixin
 ) {
-  meta: any
-  showUploadedProjects: boolean = false
+  showHistory: boolean = true
   steps: VerificationStep = new VerificationStep()
 
-  @Watch('$route')
-  onRouteChange (newRoute?: Route) {
-    this.updateMeta(newRoute)
-  }
-
-  updateMeta (route?: Route) {
-    if (!route || !route.name || ['index', 'homepage'].includes(route.name)) {
-      this.meta = this.getMeta('Welcome!')
-      return
-    }
-
-    const suffix = `for project having id: "${route.params.projectId}"`
-
-    if (route.name === 'llvm-bitcode-generation') {
-      this.meta = this.getMeta(`LLVM bitcode generation ${suffix}`)
-      return
-    }
-
-    if (route.name === 'symbolic-execution') {
-      this.meta = this.getMeta(`Symbolic execution ${suffix}`)
-    }
-  }
-
-  created () {
-    this.steps = new VerificationStep()
-    this.reset()
-
-    EventBus.$on(VerificationEvents.resetVerificationRuntime, this.reset)
-    EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
-  }
+  @VerificationRuntime.Action
+  emptyHistory!: () => void
 
   beforeDestroy () {
+    EventBus.$off(AppEvents.clearHistoryRequested)
+    EventBus.$off(VerificationEvents.resetVerificationRuntime)
+    EventBus.$off(VerificationEvents.failedVerificationStep)
+
     if (this.pollingLlvmBitcodeGenerationProgress) {
       clearInterval(this.pollingLlvmBitcodeGenerationProgress)
     }
@@ -107,67 +85,31 @@ export default class Homepage extends mixins(
     }
   }
 
-  get getMeta (): (title: string) => any {
-    return (title: string) => {
-      const twitter_handle = '@pkt_cash'
-      const description = 'Static analysis tools for rust-based smart contracts.'
-      const titleSuffix = ' - SafePKT'
-      const getTitle = (title: string) => `${title}${titleSuffix}`
+  created () {
+    this.steps = new VerificationStep()
 
-      return {
-        title: getTitle(title),
-        htmlAttrs: {
-          lang: 'en'
-        },
-        meta: [
-          { charset: 'utf-8' },
-          { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-          { hid: 'description', name: 'description', content: '' },
-          { hid: 'author', name: 'author', content: twitter_handle },
-          {
-            hid: 'og:url',
-            property: 'og:url',
-            content: 'https://pkt.cash'
-          },
-          {
-            hid: 'twitter:creator',
-            name: 'twitter:creator',
-            content: twitter_handle
-          },
-          {
-            hid: 'twitter:title',
-            name: 'twitter:title',
-            content: getTitle(title)
-          },
-          {
-            hid: 'twitter:description',
-            name: 'twitter:description',
-            content: description
-          },
-          { name: 'format-detection', content: 'telephone=no' }
-        ],
-        noscript: [
-          {
-            innerHTML:
-                'SafePKT requires JavaScript to work as intended.'
-          }
-        ],
-        link: [
-          { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-        ]
-      }
-    }
+    this.reset()
+
+    EventBus.$off(AppEvents.clearHistoryRequested)
+    EventBus.$off(VerificationEvents.failedVerificationStep)
+    EventBus.$off(VerificationEvents.resetVerificationRuntime)
+
+    EventBus.$on(AppEvents.clearHistoryRequested, this.clearHistory)
+    EventBus.$on(VerificationEvents.failedVerificationStep, this.reportError)
+    EventBus.$on(VerificationEvents.resetVerificationRuntime, this.reset)
   }
 
-  head () {
-    const route: Route = this.$route
-    this.updateMeta(route)
+  clearHistory () {
+    EventBus.$emit(VerificationEvents.resetVerificationRuntime)
+    this.emptyHistory()
+  }
 
-    return this.meta
+  goToHomepage () {
+    this.$router.push({ name: 'homepage' })
   }
 
   reset () {
-    this.$router.push({ name: 'homepage' })
+    this.goToHomepage()
 
     this.resetVerificationRuntime()
 
@@ -197,11 +139,6 @@ export default class Homepage extends mixins(
           throw new UnexpectedStep()
       }
     }
-  }
-
-  destroyed () {
-    EventBus.$off(VerificationEvents.resetVerificationRuntime)
-    EventBus.$off(VerificationEvents.failedVerificationStep)
   }
 }
 </script>

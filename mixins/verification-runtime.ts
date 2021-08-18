@@ -1,19 +1,24 @@
 import { Component, namespace } from 'nuxt-property-decorator'
-import { Project } from '~/types/project'
 import ProjectMixin from '~/mixins/project'
+import { Project } from '~/types/project'
+import {
+  GETTER_ACTIVE_PROJECT,
+  GETTER_PROJECT_BY_REVISION,
+  ACTION_RESET_VERIFICATION_RUNTIME
+} from '~/store/verification-runtime'
 
 const VerificationRuntimeStore = namespace('verification-runtime')
 
 @Component
 class VerificationRuntimeMixin extends ProjectMixin {
+  @VerificationRuntimeStore.Getter
+  public [GETTER_ACTIVE_PROJECT]!: Project;
+
   @VerificationRuntimeStore.Action
-  public resetVerificationRuntime!: () => void
+  public [ACTION_RESET_VERIFICATION_RUNTIME]!: () => void
 
   @VerificationRuntimeStore.Getter
-  public projectByIdGetter!: (projectId: string) => Project|undefined;
-
-  @VerificationRuntimeStore.Getter
-  public projectById!: (projectId: string) => Project;
+  public [GETTER_PROJECT_BY_REVISION]!: (projectRevision: string) => Project;
 }
 
 export default VerificationRuntimeMixin

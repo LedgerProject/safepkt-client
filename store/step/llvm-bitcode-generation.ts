@@ -7,9 +7,13 @@ import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 import { ProjectNotFound } from '~/mixins/project'
 import { stableStringify } from '~/modules/json'
-import { MUTATION_ADD_PROJECT } from '~/store/verification-runtime'
-import { MUTATION_SET_VERIFICATION_STEP } from '~/store/verification-steps'
 import { MUTATION_HIDE_EDITOR } from '~/store/step/upload-source'
+import {
+  GETTER_ACTIVE_PROJECT,
+  MUTATION_ADD_PROJECT,
+  MUTATION_PUSH_ERROR
+} from '~/store/verification-runtime'
+import { MUTATION_SET_VERIFICATION_STEP } from '~/store/verification-steps'
 
 const ACTION_RESET_LLVM_BITCODE_GENERATION = 'resetLlvmBitcodeGeneration'
 const GETTER_IS_REPORT_VISIBLE = 'isReportVisible'
@@ -62,7 +66,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
       }
 
       try {
-        const project: Project|null = this.context.rootGetters['verification-runtime/currentProject']
+        const project: Project|null = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
         if (project === null) {
           return false
         }
@@ -132,7 +136,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
       }
 
       this.context.commit(
-        'verification-runtime/addProject',
+        `verification-runtime/${MUTATION_ADD_PROJECT}`,
         projectState,
         { root: true }
       )
@@ -145,7 +149,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         })
 
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )
@@ -181,7 +185,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
       }
 
       await this.context.dispatch('pollLlvmBitcodeGenerationReport', project)
-      projectState.llvmBitcodeGenerationStepReport = this.context.rootGetters['verification-runtime/projectById'](project.id).llvmBitcodeGenerationStepReport
+      projectState.llvmBitcodeGenerationStepReport = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`].llvmBitcodeGenerationStepReport
 
       if (llvmBitcodeGenerationStepDone) {
         projectState.llvmBitcodeGenerationStepStarted = false
@@ -197,7 +201,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         )
       }
 
-      const currentProjectState = this.context.rootGetters['verification-runtime/projectById'](project.id)
+      const currentProjectState = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
       if (stableStringify(currentProjectState) !== stableStringify(projectState)) {
         this.context.commit(
           `verification-runtime/${MUTATION_ADD_PROJECT}`,
@@ -214,7 +218,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         })
 
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )
@@ -250,7 +254,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         }
       }
 
-      const currentProjectState = this.context.rootGetters['verification-runtime/projectById'](project.id)
+      const currentProjectState = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
       if (stableStringify(currentProjectState) !== stableStringify(projectState)) {
         this.context.commit(
             `verification-runtime/${MUTATION_ADD_PROJECT}`,
@@ -271,7 +275,7 @@ class LlvmBitcodeGenerationStore extends VuexModule {
         })
 
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )

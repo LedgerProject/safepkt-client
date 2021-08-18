@@ -6,6 +6,7 @@ import { ProjectNotFound } from '~/mixins/project'
 import VerificationStepsMixin from '~/mixins/verification-steps'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
+import { GETTER_ACTIVE_PROJECT } from '~/store/verification-runtime'
 
 const LlvmBitcodeGenerationStore = namespace('step/llvm-bitcode-generation')
 
@@ -24,6 +25,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
 
   created () {
     EventBus.$off(VerificationEvents.llvmBitcodeGeneration)
+
     EventBus.$on(VerificationEvents.llvmBitcodeGeneration, () => {
       this.toggleVerificationStepReportVisibility(VerificationStep.llvmBitcodeGenerationStep)
     })
@@ -40,7 +42,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
       let project: Project
 
       try {
-        project = this.projectById(this.projectId)
+        project = this[GETTER_ACTIVE_PROJECT]
 
         if (!project.llvmBitcodeGenerationStepStarted) {
           return
@@ -68,7 +70,7 @@ class LlvmBitcodeGenerationMixin extends mixins(VerificationStepsMixin) {
   pollingLlvmBitcodeGenerationReport?: ReturnType<typeof setInterval>
 
   async tryToGenerateLlvmBitcode () {
-    await this.generateLlvmBitcode(this.projectById(this.projectId))
+    await this.generateLlvmBitcode(this[GETTER_ACTIVE_PROJECT])
     this.$router.push({
       name: 'llvm-bitcode-generation',
       params: { projectId: this.projectId }

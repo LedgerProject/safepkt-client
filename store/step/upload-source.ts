@@ -3,7 +3,12 @@ import Vue from 'vue'
 import { HttpMethod } from '~/config'
 import { Project } from '~/types/project'
 import { VerificationStep } from '~/modules/verification-steps'
+import { GETTER_PROJECT_ID, GETTER_PROJECT_REVISION } from '~/store/editor'
 import { MUTATION_SET_VERIFICATION_STEP } from '~/store/verification-steps'
+import {
+  MUTATION_ADD_PROJECT,
+  MUTATION_PUSH_ERROR
+} from '~/store/verification-runtime'
 
 const MUTATION_HIDE_EDITOR = 'hideEditor'
 const MUTATION_SHOW_EDITOR = 'showEditor'
@@ -105,7 +110,8 @@ class UploadSourceStore extends VuexModule {
         )
 
         const project: Project = {
-          id: json.project_id,
+          id: this.context.rootGetters[`editor/${GETTER_PROJECT_ID}`],
+          revision: this.context.rootGetters[`editor/${GETTER_PROJECT_REVISION}`],
           name,
           source,
           llvmBitcodeGenerationStepStarted: false,
@@ -119,7 +125,7 @@ class UploadSourceStore extends VuexModule {
         }
 
         this.context.commit(
-          'verification-runtime/addProject',
+          `verification-runtime/${MUTATION_ADD_PROJECT}`,
           project,
           { root: true }
         )
@@ -133,7 +139,7 @@ class UploadSourceStore extends VuexModule {
         )
       } catch (e) {
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )

@@ -31,9 +31,7 @@
   }
 
   &__title {
-    font-size: var(--font-size-title);
-    margin: calc(2 * var(--space)) 0 0 var(--space);
-    margin-top: 0;
+    @extend .title
   }
 
   &__label {

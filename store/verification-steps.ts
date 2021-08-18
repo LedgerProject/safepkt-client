@@ -9,8 +9,20 @@ import {
   VerificationStep as Step
 } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
-import { GETTER_IS_REPORT_VISIBLE as isLlvmBitcodeGenerationReportVisible, MUTATION_SHOW_REPORT as showLlvmBitcodeGenerationReport, MUTATION_HIDE_REPORT as hideLlvmBitcodeGenerationReport } from '~/store/step/llvm-bitcode-generation'
-import { GETTER_IS_REPORT_VISIBLE as isSymbolicExecutionReportVisible, MUTATION_SHOW_REPORT as showSymbolicExecutionReport, MUTATION_HIDE_REPORT as hideSymbolicExecutionReport } from '~/store/step/symbolic-execution'
+import {
+  GETTER_IS_REPORT_VISIBLE as isLlvmBitcodeGenerationReportVisible,
+  MUTATION_HIDE_REPORT as hideLlvmBitcodeGenerationReport,
+  MUTATION_SHOW_REPORT as showLlvmBitcodeGenerationReport
+} from '~/store/step/llvm-bitcode-generation'
+import {
+  GETTER_IS_REPORT_VISIBLE as isSymbolicExecutionReportVisible,
+  MUTATION_HIDE_REPORT as hideSymbolicExecutionReport,
+  MUTATION_SHOW_REPORT as showSymbolicExecutionReport
+} from '~/store/step/symbolic-execution'
+import {
+  GETTER_ACTIVE_PROJECT,
+  MUTATION_PUSH_ERROR
+} from '~/store/verification-runtime'
 import VerificationEvents from '~/modules/events'
 
 const MUTATION_SET_VERIFICATION_STEP = 'setVerificationStep'
@@ -47,7 +59,7 @@ export default class VerificationStepsStore extends VuexModule {
   reportError ({ error }: {error: Error}): void {
     this.context.commit('unlockResetButton')
     this.context.commit(
-      'verification-runtime/pushError',
+      `verification-runtime/${MUTATION_PUSH_ERROR}`,
       { error },
       { root: true }
     )
@@ -91,7 +103,7 @@ export default class VerificationStepsStore extends VuexModule {
       }
 
       try {
-        const project: Project|null = this.context.rootGetters['verification-runtime/currentProject']
+        const project: Project|null = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
         if (project === null) {
           return false
         }
@@ -100,7 +112,7 @@ export default class VerificationStepsStore extends VuexModule {
       } catch (e) {
         if (!(e instanceof ProjectNotFound)) {
           this.context.commit(
-            'verification-runtime/pushError',
+            `verification-runtime/${MUTATION_PUSH_ERROR}`,
             { error: e },
             { root: true }
           )

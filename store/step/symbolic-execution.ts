@@ -6,8 +6,12 @@ import { HttpMethod, Routes } from '~/config'
 import { ProjectNotFound } from '~/mixins/project'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
-import { MUTATION_ADD_PROJECT } from '~/store/verification-runtime'
 import { stableStringify } from '~/modules/json'
+import {
+  GETTER_ACTIVE_PROJECT,
+  MUTATION_ADD_PROJECT,
+  MUTATION_PUSH_ERROR
+} from '~/store/verification-runtime'
 import { MUTATION_HIDE_EDITOR } from '~/store/step/upload-source'
 
 const ACTION_RESET_SYMBOLIC_EXECUTION = 'resetSymbolicExecution'
@@ -65,7 +69,7 @@ class SymbolicExecutionStore extends VuexModule {
       return false
     }
 
-    const project: Project|null = this.context.rootGetters['verification-runtime/currentProject']
+    const project: Project|null = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
     if (project === null) {
       return false
     }
@@ -94,15 +98,13 @@ class SymbolicExecutionStore extends VuexModule {
 
   public get canRunSymbolicExecutionStep (): () => boolean {
     return () => {
-      let project: Project
-
-      if (!this.context.rootGetters['editor/isProjectIdValid']()) {
-        return false
-      }
+      let project: Project|null
 
       try {
-        const projectId = this.context.rootGetters['editor/projectId']
-        project = this.context.rootGetters['verification-runtime/projectById'](projectId)
+        project = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
+        if (project === null) {
+          return false
+        }
 
         return project.llvmBitcodeGenerationStepDone &&
             !project.symbolicExecutionStepStarted // No symbolic execution has started
@@ -180,7 +182,7 @@ class SymbolicExecutionStore extends VuexModule {
       }
 
       this.context.commit(
-        'verification-runtime/addProject',
+        `verification-runtime/${MUTATION_ADD_PROJECT}`,
         projectState,
         { root: true }
       )
@@ -193,7 +195,7 @@ class SymbolicExecutionStore extends VuexModule {
         })
 
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )
@@ -229,7 +231,7 @@ class SymbolicExecutionStore extends VuexModule {
       }
 
       await this.context.dispatch('pollSymbolicExecutionReport', project)
-      projectState.symbolicExecutionStepReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
+      projectState.symbolicExecutionStepReport = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`].symbolicExecutionStepReport
 
       if (symbolicExecutionStepDone) {
         projectState.symbolicExecutionStepStarted = false
@@ -240,7 +242,7 @@ class SymbolicExecutionStore extends VuexModule {
         )
       }
 
-      const currentProjectState = this.context.rootGetters['verification-runtime/projectById'](project.id)
+      const currentProjectState = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`]
 
       if (
         symbolicExecutionStepDone ||
@@ -260,7 +262,7 @@ class SymbolicExecutionStore extends VuexModule {
       })
       if (!(e instanceof ProjectNotFound)) {
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )
@@ -287,7 +289,7 @@ class SymbolicExecutionStore extends VuexModule {
         return
       }
 
-      const currentReport = this.context.rootGetters['verification-runtime/projectById'](project.id).symbolicExecutionStepReport
+      const currentReport = this.context.rootGetters[`verification-runtime/${GETTER_ACTIVE_PROJECT}`].symbolicExecutionStepReport
       if (stableStringify(json) !== stableStringify(currentReport)) {
         const projectState: Project = {
           ...project,
@@ -309,7 +311,7 @@ class SymbolicExecutionStore extends VuexModule {
         })
 
         this.context.commit(
-          'verification-runtime/pushError',
+          `verification-runtime/${MUTATION_PUSH_ERROR}`,
           { error: e },
           { root: true }
         )

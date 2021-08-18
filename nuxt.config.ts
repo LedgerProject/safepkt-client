@@ -26,6 +26,7 @@ const config: NuxtConfig = {
   buildModules: [
     // https://go.nuxtjs.dev/typescript
     '@nuxt/typescript-build',
+    '@nuxtjs/date-fns',
     '@nuxtjs/dotenv',
     '@nuxtjs/fontawesome',
     '@nuxtjs/pwa',
@@ -34,10 +35,14 @@ const config: NuxtConfig = {
   ],
 
   fontawesome: {
+    component: 'fa',
     icons: {
       solid: [
         'faEye',
-        'faEyeSlash'
+        'faEyeSlash',
+        'faHistory',
+        'faHourglass',
+        'faTrash'
       ]
     }
   },

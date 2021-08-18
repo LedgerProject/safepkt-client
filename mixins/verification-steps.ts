@@ -1,13 +1,14 @@
 import { Component, mixins, namespace } from 'nuxt-property-decorator'
+import VerificationRuntimeMixin from '~/mixins/verification-runtime'
+import { VerificationStep as NextVerificationStep } from '~/modules/verification-steps'
+import { GETTER_ACTIVE_PROJECT } from '~/store/verification-runtime'
+import { Project } from '~/types/project'
 import {
   VerificationStep as VerificationStepType,
   VerificationStep,
   VerificationStepAssertion,
   VerificationStepPollingTarget
 } from '~/types/verification-steps'
-import { Project } from '~/types/project'
-import { VerificationStep as NextVerificationStep } from '~/modules/verification-steps'
-import VerificationRuntimeMixin from '~/mixins/verification-runtime'
 
 const ReportStore = namespace('report')
 const VerificationStepsStore = namespace('verification-steps')
@@ -52,12 +53,12 @@ class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
 
   get verificationStepReport (): (step: VerificationStep) => string {
     return (step: VerificationStep) => {
-      if (!this.isProjectIdValid()) {
-        return ''
-      }
-
       try {
-        const project: Project = this.projectById(this.projectId)
+        const project: Project|null = this[GETTER_ACTIVE_PROJECT]
+        if (!project) {
+          return ''
+        }
+
         return this.verificationStepReportGetter({ project, step })
       } catch (e) {
         this.logger.error(
