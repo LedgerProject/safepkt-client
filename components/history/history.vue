@@ -5,13 +5,12 @@
       Revisions
     </h2>
     <label for="trash">
-      <font-awesome-icon class="history__trash-icon" icon="trash" />
       <button
         id="trash"
         class="history__button"
         @click="clearHistory"
       >
-        Empty history
+        Clear history
       </button>
     </label>
     <ul class="history__list">
@@ -19,15 +18,30 @@
         v-for="project in sortedProjects"
         :key="formatIndex(project)"
         :class="revisionClasses(project)"
-        @click="revertTo({revision: project.revision})"
       >
-        <font-awesome-icon
-          class="history__icon"
-          icon="history"
-        />
-        <div class="history__contract">
-          <div v-text="formatContractName(project)" />
-          <span class="history__contract-revision" v-text="formatContractRevision(project)" />
+        <div
+          class="history__action"
+          :title="formatActionTitle('Revert to revision {}', project)"
+          @click="revertTo({revision: project.revision})"
+        >
+          <font-awesome-icon
+            class="history__icon"
+            icon="history"
+          />
+          <div class="history__contract">
+            <div v-text="formatContractName(project)" />
+            <span class="history__contract-revision" v-text="formatContractRevision(project)" />
+          </div>
+        </div>
+        <div
+          class="history__action history__action--remove"
+          @click="remove({revision: project.revision})"
+        >
+          <font-awesome-icon
+            class="history__trash-icon"
+            icon="trash"
+            :title="formatActionTitle('Remove revision {}', project)"
+          />
         </div>
       </li>
     </ul>
@@ -41,6 +55,7 @@ import { AppEvents } from '~/modules/events'
 import EventBus from '~/modules/event-bus'
 import {
   ACTION_REVERT_TO_REVISION,
+  MUTATION_REMOVE_REVISION,
   GETTER_ACTIVE_PROJECT
 } from '~/store/verification-runtime'
 
@@ -48,6 +63,9 @@ const VerificationRuntime = namespace('verification-runtime')
 
 @Component
 export default class History extends Vue {
+  @VerificationRuntime.Action
+  [ACTION_REVERT_TO_REVISION]!: ({ revision }: { revision: number }) => void
+
   @VerificationRuntime.Getter
   allProjects!: Project[]
 
@@ -57,8 +75,8 @@ export default class History extends Vue {
   @VerificationRuntime.Getter
   [GETTER_ACTIVE_PROJECT]!: Project|null
 
-  @VerificationRuntime.Action
-  [ACTION_REVERT_TO_REVISION]!: ({ revision }: { revision: number }) => void
+  @VerificationRuntime.Mutation
+  [MUTATION_REMOVE_REVISION]!: ({ revision }: { revision: number }) => void
 
   clearHistory () {
     EventBus.$emit(AppEvents.clearHistoryRequested)
@@ -108,6 +126,14 @@ export default class History extends Vue {
 
   formatIndex (contract: Project): string {
     return `${contract.id}_${contract.revision}`
+  }
+
+  formatActionTitle (tpl: string, contract: Project) {
+    return tpl.replace('{}', `"${contract.revision}"`)
+  }
+
+  remove ({ revision }: { revision: number }) {
+    this.removeRevision({ revision })
   }
 
   revertTo ({ revision }: { revision: number }) {

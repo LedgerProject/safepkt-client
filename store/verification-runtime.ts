@@ -20,6 +20,7 @@ import EventBus from '~/modules/event-bus'
 import VerificationEvents from '~/modules/events'
 
 const ACTION_EMPTY_HISTORY = 'emptyHistory'
+const MUTATION_REMOVE_REVISION = 'removeRevision'
 const ACTION_RESET_PROJECTS = 'resetProject'
 const ACTION_RESET_VERIFICATION_RUNTIME = 'resetVerificationRuntime'
 const ACTION_REVERT_TO_REVISION = 'revertToRevision'
@@ -41,6 +42,7 @@ export {
   GETTER_PROJECT_BY_REVISION,
   GETTER_PROJECT_BY_REVISION_GETTER,
   MUTATION_ADD_PROJECT,
+  MUTATION_REMOVE_REVISION,
   MUTATION_PUSH_ERROR,
   MUTATION_RESET_PROJECTS
 }
@@ -168,6 +170,11 @@ export default class VerificationRuntimeStore extends VuexModule {
   [ACTION_EMPTY_HISTORY] (): void {
     this.context.commit(MUTATION_RESET_PROJECTS)
     this.context.dispatch(ACTION_RESET_VERIFICATION_RUNTIME)
+  }
+
+  @Mutation
+  [MUTATION_REMOVE_REVISION] ({ revision }: { revision: number }): void {
+    this.projects = [...this.projects.filter(p => p.revision !== revision)]
   }
 
   @Action
