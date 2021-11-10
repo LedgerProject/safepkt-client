@@ -7,6 +7,10 @@ to the field of software verification tools targeting rust-based programs.
 
 See [SafePKT description](https://ledgerproject.github.io/home/#/teams/SafePKT)
 
+## Demo
+
+[SafePKT web frontend for verifying rust-based Smart Contract written with ink! v2.1.0](https://safepkt.weaving-the-web.org/)
+
 ## Table of contents
 
  - [Installaton](#installation)
