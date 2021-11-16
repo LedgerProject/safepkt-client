@@ -28,6 +28,14 @@
         :width="456"
       >
     </div>
+    <h2 class="report__title">
+      About the project
+    </h2>
+    <p>
+      Learn more about this project funded by the European Commission,<br>
+      via the NGI-LEDGER program and its partners (with Dyne.org, Blumorpho, FundingBox)
+      by following this link: <a class="report__link" href="https://ledgerproject.github.io/home/#/teams/SafePKT">https://ledgerproject.github.io/home/#/teams/SafePKT</a>
+    </p>
   </div>
 </template>
 

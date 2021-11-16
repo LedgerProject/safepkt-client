@@ -26,6 +26,14 @@
     overflow-y: scroll;
   }
 
+  &__link,
+  &__link:active,
+  &__link:hover,
+  &__link:link,
+  &__link:visited {
+    color: #000;
+  }
+
   &__icon {
     cursor: pointer;
   }
