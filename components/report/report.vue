@@ -16,12 +16,25 @@
       v-model="content"
       class="report__content"
     />
+    <h2 class="report__title">
+      Thanks to our partners
+    </h2>
+    <div class="app__logo-wrapper">
+      <img
+        alt="Dyne.org logo - Blumorpho logo - NGI-LEDGER logo - Fundingbox logo -  European Commission logo"
+        class="app__logo"
+        :height="353"
+        :src="source"
+        :width="456"
+      >
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Watch, mixins } from 'nuxt-property-decorator'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
+import allLogos from '~/assets/all-logos.png'
 
 @Component
 export default class Report extends mixins(SymbolicExecutionMixin) {
@@ -60,6 +73,18 @@ export default class Report extends mixins(SymbolicExecutionMixin) {
     required: true
   })
   toggleReportVisibility!: () => void
+
+  @Prop({
+    type: String,
+    default: allLogos
+  })
+  readonly source!: string;
+
+  @Prop({
+    type: Number,
+    default: 75
+  })
+  readonly side!: number;
 
   @Watch('content', { deep: true, immediate: true })
   onContentUpdated () {

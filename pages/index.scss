@@ -8,6 +8,13 @@
     max-width: var(--max-width);
   }
 
+  &__logo-wrapper {
+    .app__logo {
+      height: 353px;
+      width: 456px;
+    }
+  }
+
   &__body {
     margin-top: calc(1.5 * var(--header-height));
   }
