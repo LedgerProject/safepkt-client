@@ -26,6 +26,13 @@
     overflow-y: scroll;
   }
 
+  &__logo-wrapper {
+    .report__logo {
+      height: 266px;
+      width: 290px;
+    }
+  }
+
   &__link,
   &__link:active,
   &__link:hover,

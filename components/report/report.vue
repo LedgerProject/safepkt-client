@@ -17,15 +17,15 @@
       class="report__content"
     />
     <h2 class="report__title">
-      Thanks to our partners
+      Funded by
     </h2>
-    <div class="app__logo-wrapper">
+    <div class="report__logo-wrapper">
       <img
-        alt="Dyne.org logo - Blumorpho logo - NGI-LEDGER logo - Fundingbox logo -  European Commission logo"
-        class="app__logo"
-        :height="353"
+        alt="NGI-LEDGER logo - European Commission logo"
+        class="report__logo"
+        :height="266"
         :src="source"
-        :width="456"
+        :width="290"
       >
     </div>
     <h2 class="report__title">
@@ -42,7 +42,7 @@
 <script lang="ts">
 import { Component, Prop, Watch, mixins } from 'nuxt-property-decorator'
 import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
-import allLogos from '~/assets/all-logos.png'
+import ngiLedgerEuCommissionLogos from '~/assets/ngi-ledger-eu-commission-logos.png'
 
 @Component
 export default class Report extends mixins(SymbolicExecutionMixin) {
@@ -84,7 +84,7 @@ export default class Report extends mixins(SymbolicExecutionMixin) {
 
   @Prop({
     type: String,
-    default: allLogos
+    default: ngiLedgerEuCommissionLogos
   })
   readonly source!: string;
 
