@@ -62,7 +62,7 @@ class EditorStore extends VuexModule {
   } = {
     projectId: '',
     projectRevision: 0,
-    projectName: 'Plain Multisig Wallet',
+    projectName: 'Flawed ERC20 Contract',
     base64EncodedSource: encodeSource(source)
   }
 
