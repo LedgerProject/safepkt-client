@@ -103,12 +103,16 @@ class ProgramVerificationStore extends VuexModule {
     const url = `${baseUrl}${routes.startProgramVerification.url}`
       .replace('{{ projectId }}', project.id)
     const method: HttpMethod = routes.startProgramVerification.method
+    const body: BodyInit = JSON.stringify({ flags: 'quiet' })
 
     try {
       this.context.commit(`step/upload-source/${MUTATION_HIDE_EDITOR}`, {}, { root: true })
       this.context.commit(MUTATION_SHOW_REPORT)
 
-      const response = await fetch(url, this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, null))
+      const response = await fetch(
+        url,
+        this.context.rootGetters['verification-runtime/getFetchRequestInit'](method, body)
+      )
       const json = await response.json()
 
       if (
