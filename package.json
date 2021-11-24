@@ -1,6 +1,6 @@
 {
   "name": "safepkt-frontend",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "licenses": [
     {
@@ -63,6 +63,7 @@
     "eslint": "^7.32.0",
     "eslint-config-google": "^0.14.0",
     "eslint-loader": "^4.0.2",
+    "eslint-plugin-jest": "^25.3.0",
     "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-prettier": "^3.4.1",
     "eslint-plugin-typescript": "^0.14.0",

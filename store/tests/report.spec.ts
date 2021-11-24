@@ -16,11 +16,18 @@ const getReportStore = () => {
 }
 
 describe('ReportStore', () => {
-  it('has to get a store instance',
-    (done) => {
-      const service = getReportStore()
-      expect(service).toBeInstanceOf(Object)
-      done()
-    }
-  )
+  it('has to get a store instance', () => {
+    // See https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-done-callback.md#rule-details
+    return new Promise((resolve, reject) => {
+      try {
+        const service = getReportStore()
+        expect(service).toBeInstanceOf(Object)
+        resolve(true)
+      } catch (e) {
+        if (e instanceof Error) {
+          reject(e.message)
+        }
+      }
+    })
+  })
 })
