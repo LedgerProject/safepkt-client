@@ -14,12 +14,6 @@ class ReportStore extends VuexModule {
         case step === VerificationStep.uploadSourceStep:
           return 'Paste program'
 
-        case step === VerificationStep.llvmBitcodeGenerationStep:
-          return 'Generate LLVM Bitcode'
-
-        case step === VerificationStep.symbolicExecutionStep:
-          return 'Run symbolic execution'
-
         case step === VerificationStep.programVerificationStep:
           return 'Verify program'
 

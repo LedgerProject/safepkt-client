@@ -142,14 +142,6 @@ export default class VerificationStepsStore extends VuexModule {
     }
   ) => string {
     return ({ project, step }: {project: Project, step: VerificationStep}) => {
-      if (step === Step.symbolicExecutionStep) {
-        return project.symbolicExecutionStepReport.messages
-      }
-
-      if (step === Step.llvmBitcodeGenerationStep) {
-        return project.llvmBitcodeGenerationStepReport.messages
-      }
-
       if (step === Step.programVerificationStep) {
         return project.programVerificationStepReport.messages
       }
@@ -242,14 +234,6 @@ export default class VerificationStepsStore extends VuexModule {
 
   get verificationStepReportVisibilityToggler (): (step: VerificationStep) => () => void {
     return (step: VerificationStep) => {
-      if (step === Step.llvmBitcodeGenerationStep) {
-        return () => EventBus.$emit(VerificationEvents.llvmBitcodeGeneration)
-      }
-
-      if (step === Step.symbolicExecutionStep) {
-        return () => EventBus.$emit(VerificationEvents.symbolicExecution)
-      }
-
       if (step === Step.programVerificationStep) {
         return () => EventBus.$emit(VerificationEvents.programVerification)
       }

@@ -2,9 +2,7 @@ import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators'
 import Vue from 'vue'
 import { HttpMethod } from '~/config'
 import { Project } from '~/types/project'
-import { VerificationStep } from '~/modules/verification-steps'
 import { GETTER_PROJECT_ID, GETTER_PROJECT_REVISION } from '~/store/editor'
-import { MUTATION_SET_VERIFICATION_STEP } from '~/store/verification-steps'
 import {
   MUTATION_ADD_PROJECT,
   MUTATION_PUSH_ERROR
@@ -135,11 +133,6 @@ class UploadSourceStore extends VuexModule {
         this.context.commit(
           `verification-runtime/${MUTATION_ADD_PROJECT}`,
           project,
-          { root: true }
-        )
-        this.context.commit(
-          `verification-steps/${MUTATION_SET_VERIFICATION_STEP}`,
-          VerificationStep.llvmBitcodeGenerationStep,
           { root: true }
         )
         this.context.commit(
