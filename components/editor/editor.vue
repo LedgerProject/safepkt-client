@@ -55,7 +55,6 @@ import 'prismjs/themes/prism-okaidia.css'
 import { VerificationStep } from '~/modules/verification-steps'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import UploadSourceMixin from '~/mixins/step/upload-source'
-import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 import {
   ACTION_ENCODE_SOURCE,
   MUTATION_SET_PROJECT_NAME
@@ -66,10 +65,7 @@ import { AppEvents } from '~/modules/events'
 @Component({
   components: { PrismEditor, VerificationSteps }
 })
-export default class Editor extends mixins(
-  UploadSourceMixin,
-  SymbolicExecutionMixin
-) {
+export default class Editor extends mixins(UploadSourceMixin) {
   showEditorIcon: string = 'eye-slash';
   showEditorIconTitle: string = 'Hide editor';
 

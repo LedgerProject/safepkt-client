@@ -83,48 +83,6 @@ const api: Api = {
       url: '/source',
       params: {}
     },
-    startLLVMBitcodeGeneration: {
-      method: methods.METHOD_POST,
-      url: '/llvm-bitcode-generation/{{ projectId }}',
-      params: {
-        projectId: String
-      }
-    },
-    getLLVMBitcodeGenerationProgress: {
-      method: methods.METHOD_GET,
-      url: '/llvm-bitcode-generation/{{ projectId }}/progress',
-      params: {
-        projectId: String
-      }
-    },
-    getLLVMBitcodeGenerationReport: {
-      method: methods.METHOD_GET,
-      url: '/llvm-bitcode-generation/{{ projectId }}/report',
-      params: {
-        projectId: String
-      }
-    },
-    startSymbolicExecution: {
-      method: methods.METHOD_POST,
-      url: '/symbolic-execution/{{ projectId }}',
-      params: {
-        projectId: String
-      }
-    },
-    getSymbolicExecutionProgress: {
-      method: methods.METHOD_GET,
-      url: '/symbolic-execution/{{ projectId }}/progress',
-      params: {
-        projectId: String
-      }
-    },
-    getSymbolicExecutionReport: {
-      method: methods.METHOD_GET,
-      url: '/symbolic-execution/{{ projectId }}/report',
-      params: {
-        projectId: String
-      }
-    },
     startSourceRestoration: {
       method: methods.METHOD_POST,
       url: '/source-restoration/{{ projectId }}',

@@ -40,12 +40,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Watch, mixins } from 'nuxt-property-decorator'
-import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
+import { Component, Prop, Watch, Vue, mixins } from 'nuxt-property-decorator'
 import ngiLedgerEuCommissionLogos from '~/assets/ngi-ledger-eu-commission-logos.png'
 
 @Component
-export default class Report extends mixins(SymbolicExecutionMixin) {
+export default class Report extends Vue {
   $refs!: {
     content: HTMLElement
   }

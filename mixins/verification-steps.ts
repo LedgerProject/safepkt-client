@@ -61,11 +61,13 @@ class VerificationStepsMixin extends mixins(VerificationRuntimeMixin) {
 
         return this.verificationStepReportGetter({ project, step })
       } catch (e) {
-        this.logger.error(
-          e.message,
-          'index.vue',
-          { projectId: this.projectId }
-        )
+        if (e instanceof Error) {
+          this.logger.error(
+            e.message,
+            'index.vue',
+            { projectId: this.projectId }
+          )
+        }
 
         return ''
       }

@@ -16,26 +16,6 @@
         :is-report-visible="isVerificationStepReportVisible('programVerification')"
         :toggle-report-visibility="verificationStepReportVisibilityToggler('programVerification')"
       />
-      <Report
-        v-show="false"
-        :title="reportTitle('llvmBitcodeGeneration')"
-        :title-icon="titleIcon('llvmBitcodeGeneration')"
-        :content="verificationStepReport('llvmBitcodeGeneration')"
-        :is-report-visible="isVerificationStepReportVisible('llvmBitcodeGeneration')"
-        :toggle-report-visibility="verificationStepReportVisibilityToggler('llvmBitcodeGeneration')"
-      />
-      <Report
-        v-show="false"
-        :title="reportTitle('symbolicExecution')"
-        :title-icon="titleIcon('symbolicExecution')"
-        :content="verificationStepReport('symbolicExecution')"
-        :is-report-visible="isVerificationStepReportVisible('symbolicExecution')"
-        :toggle-report-visibility="verificationStepReportVisibilityToggler('symbolicExecution')"
-      >
-        <SymbolicExecutionFlags
-          v-if="isVerificationStepReportVisible('symbolicExecution')"
-        />
-      </Report>
       <History v-show="showHistory" />
       <notifications position="bottom right" />
     </div>
@@ -51,11 +31,9 @@ import Report from '~/components/report/report.vue'
 import UploadSourceMixin from '~/mixins/step/upload-source'
 import SourceRestorationMixin from '~/mixins/step/source-restoration'
 import ProgramVerificationMixin from '~/mixins/step/program-verification'
-import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 import EventBus from '~/modules/event-bus'
 import VerificationEvents, { AppEvents } from '~/modules/events'
 import { UnexpectedStep, VerificationStep } from '~/modules/verification-steps'
-import SymbolicExecutionFlags from '~/components/symbolic-execution-flags/symbolic-execution-flags.vue'
 import VerificationSteps from '~/components/verification-steps/verification-steps.vue'
 import { VerificationStep as VerificationStepType } from '~/types/verification-steps'
 import MetaMixin from '~/mixins/meta'
@@ -68,7 +46,6 @@ const VerificationRuntime = namespace('verification-runtime')
     Editor,
     History,
     Report,
-    SymbolicExecutionFlags,
     VerificationSteps
   }
 })
@@ -76,8 +53,7 @@ export default class Homepage extends mixins(
   MetaMixin,
   ProgramVerificationMixin,
   UploadSourceMixin,
-  SourceRestorationMixin,
-  SymbolicExecutionMixin
+  SourceRestorationMixin
 ) {
   showHistory: boolean = false
   steps: VerificationStep = new VerificationStep()
@@ -90,12 +66,6 @@ export default class Homepage extends mixins(
     EventBus.$off(VerificationEvents.resetVerificationRuntime)
     EventBus.$off(VerificationEvents.failedVerificationStep)
 
-    if (this.pollingLlvmBitcodeGenerationProgress) {
-      clearInterval(this.pollingLlvmBitcodeGenerationProgress)
-    }
-    if (this.pollingSymbolicExecutionProgress) {
-      clearInterval(this.pollingSymbolicExecutionProgress)
-    }
     if (this.pollingProgramVerificationProgress) {
       clearInterval(this.pollingProgramVerificationProgress)
     }
@@ -145,8 +115,6 @@ export default class Homepage extends mixins(
       this.resetVerificationRuntime()
     }
 
-    this.startPollingSymbolicExecutionProgress()
-    this.startPollingLlvmBitcodeGenerationProgress()
     this.startPollingProgramVerificationProgress()
     this.startPollingSourceRestorationProgress()
   }
@@ -160,20 +128,6 @@ export default class Homepage extends mixins(
           }
 
           return 'Show program verification report'
-
-        case step === VerificationStep.llvmBitcodeGenerationStep:
-          if (this.isVerificationStepReportVisible(step)) {
-            return 'Hide LLVM bitcode generation report'
-          }
-
-          return 'Show LLVM bitcode generation report'
-
-        case step === VerificationStep.symbolicExecutionStep:
-          if (this.isVerificationStepReportVisible(step)) {
-            return 'Hide symbolic execution report'
-          }
-
-          return 'Show symbolic execution report'
 
         case step === VerificationStep.sourceRestorationStep:
           if (this.isVerificationStepReportVisible(step)) {

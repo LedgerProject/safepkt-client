@@ -10,16 +10,6 @@ import {
 } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
 import {
-  GETTER_IS_REPORT_VISIBLE as isLlvmBitcodeGenerationReportVisible,
-  MUTATION_HIDE_REPORT as hideLlvmBitcodeGenerationReport,
-  MUTATION_SHOW_REPORT as showLlvmBitcodeGenerationReport
-} from '~/store/step/llvm-bitcode-generation'
-import {
-  GETTER_IS_REPORT_VISIBLE as isSymbolicExecutionReportVisible,
-  MUTATION_HIDE_REPORT as hideSymbolicExecutionReport,
-  MUTATION_SHOW_REPORT as showSymbolicExecutionReport
-} from '~/store/step/symbolic-execution'
-import {
   GETTER_IS_REPORT_VISIBLE as isProgramVerificationReportVisible,
   MUTATION_HIDE_REPORT as hideProgramVerificationReport,
   MUTATION_SHOW_REPORT as showProgramVerificationReport
@@ -85,14 +75,6 @@ export default class VerificationStepsStore extends VuexModule {
 
       if (step === Step.uploadSourceStep) {
         canDo = this.context.rootGetters['step/upload-source/canUploadSource']()
-      }
-
-      if (step === Step.llvmBitcodeGenerationStep) {
-        canDo = this.context.rootGetters['step/llvm-bitcode-generation/canRunLlvmBitcodeGenerationStep']()
-      }
-
-      if (step === Step.symbolicExecutionStep) {
-        canDo = this.context.rootGetters['step/symbolic-execution/canRunSymbolicExecutionStep']()
       }
 
       if (step === Step.programVerificationStep) {
@@ -182,14 +164,6 @@ export default class VerificationStepsStore extends VuexModule {
 
   get isVerificationStepReportVisible (): (step: VerificationStep) => boolean {
     return (step: VerificationStep) => {
-      if (step === Step.llvmBitcodeGenerationStep) {
-        return this.context.rootGetters[`step/llvm-bitcode-generation/${isLlvmBitcodeGenerationReportVisible}`]
-      }
-
-      if (step === Step.symbolicExecutionStep) {
-        return this.context.rootGetters[`step/symbolic-execution/${isSymbolicExecutionReportVisible}`]
-      }
-
       if (step === Step.programVerificationStep) {
         return this.context.rootGetters[`step/program-verification/${isProgramVerificationReportVisible}`]
       }
@@ -211,14 +185,6 @@ export default class VerificationStepsStore extends VuexModule {
 
   get isVerificationStepSuccessful (): VerificationStepAssertion {
     return (project: Project, pollingTarget: VerificationStepPollingTarget) => {
-      if (pollingTarget === PollingTarget.LLVMBitcodeGenerationStepReport) {
-        return project.llvmBitcodeGenerationStepDone
-      }
-
-      if (pollingTarget === PollingTarget.SymbolicExecutionStepProgress) {
-        return project.symbolicExecutionStepDone
-      }
-
       if (pollingTarget === PollingTarget.ProgramVerificationStepProgress) {
         return project.programVerificationStepDone
       }
@@ -234,42 +200,6 @@ export default class VerificationStepsStore extends VuexModule {
   @Action
   toggleVerificationStepReportVisibility (step: VerificationStep) : void {
     const isReportVisible = this.isVerificationStepReportVisible(step)
-
-    if (step === Step.llvmBitcodeGenerationStep) {
-      if (isReportVisible) {
-        this.context.commit(
-            `step/llvm-bitcode-generation/${hideLlvmBitcodeGenerationReport}`,
-            {},
-            { root: true }
-        )
-        return
-      }
-
-      this.context.commit(
-          `step/llvm-bitcode-generation/${showLlvmBitcodeGenerationReport}`,
-          {},
-          { root: true }
-      )
-      return
-    }
-
-    if (step === Step.symbolicExecutionStep) {
-      if (isReportVisible) {
-        this.context.commit(
-            `step/symbolic-execution/${hideSymbolicExecutionReport}`,
-            {},
-            { root: true }
-        )
-        return
-      }
-
-      this.context.commit(
-          `step/symbolic-execution/${showSymbolicExecutionReport}`,
-          {},
-          { root: true }
-      )
-      return
-    }
 
     if (step === Step.programVerificationStep) {
       if (isReportVisible) {

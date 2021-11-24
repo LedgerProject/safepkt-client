@@ -1,26 +1,12 @@
 <template>
   <div :class="componentClasses">
-    <!-- source upload and llvm bitcode generation
-         have been combined -->
     <div class="verification-steps__row verification-steps__steps">
       <label class="verification-steps__step-label">
         <button
-          v-if="false"
           :class="uploadSourceButtonClasses()"
           :disabled="!enableUploadSourceButton"
           @click="tryToUploadSource"
         >
-          <span v-if="!showShortcuts">Generate LLVM Bitcode [IR]</span>
-          <span v-else>IR</span>
-        </button>
-        <button
-          :class="uploadSourceButtonClasses()"
-          :disabled="!enableUploadSourceButton"
-          @click="tryToUploadSource"
-        >
-          <!--          :class="symbolicExecutionButtonClasses()"-->
-          <!--          :disabled="!enableRunSymbolicExecutionButton"-->
-          <!--          @click="tryToRunSymbolicExecution"-->
           <span v-if="!showShortcuts">Verify program [V]</span>
           <span v-else>V</span>
         </button>
@@ -40,15 +26,11 @@
 <script lang="ts">
 import { Component, mixins, Prop } from 'nuxt-property-decorator'
 import UploadSourceMixin from '~/mixins/step/upload-source'
-import SymbolicExecutionMixin from '~/mixins/step/symbolic-execution'
 import VerificationEvents from '~/modules/events'
 import EventBus from '~/modules/event-bus'
 
 @Component
-export default class VerificationSteps extends mixins(
-  UploadSourceMixin,
-  SymbolicExecutionMixin
-) {
+export default class VerificationSteps extends mixins(UploadSourceMixin) {
   @Prop({
     type: Boolean,
     required: true
@@ -79,18 +61,8 @@ export default class VerificationSteps extends mixins(
   })
   showShortcuts!: boolean;
 
-  generateLlvmBitcodeButtonClasses () {
-    return this.getDefaultDisabledButtonClass()
-  }
-
   uploadSourceButtonClasses () {
     if (!this.enableUploadSourceButton) {
-      return this.getDefaultDisabledButtonClass()
-    }
-  }
-
-  symbolicExecutionButtonClasses () {
-    if (!this.enableRunSymbolicExecutionButton) {
       return this.getDefaultDisabledButtonClass()
     }
   }

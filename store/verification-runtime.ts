@@ -6,8 +6,6 @@ import {
   VerificationStep as VerificationStepMod
 } from '~/modules/verification-steps'
 import { ProjectNotFound } from '~/mixins/project'
-import { ACTION_RESET_LLVM_BITCODE_GENERATION, MUTATION_HIDE_REPORT as hideLlvmBitcodeGenerationReport } from '~/store/step/llvm-bitcode-generation'
-import { ACTION_RESET_SYMBOLIC_EXECUTION, MUTATION_HIDE_REPORT as hideSymbolicExecutionReport } from '~/store/step/symbolic-execution'
 import { ACTION_RESET_PROGRAM_VERIFICATION, MUTATION_HIDE_REPORT as hideProgramVerificationReport } from '~/store/step/program-verification'
 
 import {
@@ -205,16 +203,6 @@ export default class VerificationRuntimeStore extends VuexModule {
       })
       .forEach((p: Project) => {
         this.context.dispatch(
-          `step/llvm-bitcode-generation/${ACTION_RESET_LLVM_BITCODE_GENERATION}`,
-          p,
-          { root: true }
-        )
-        this.context.dispatch(
-          `step/symbolic-execution/${ACTION_RESET_SYMBOLIC_EXECUTION}`,
-          p,
-          { root: true }
-        )
-        this.context.dispatch(
           `step/program-verification/${ACTION_RESET_PROGRAM_VERIFICATION}`,
           p,
           { root: true }
@@ -231,16 +219,6 @@ export default class VerificationRuntimeStore extends VuexModule {
     )
     this.context.commit(
       `step/upload-source/${MUTATION_SHOW_EDITOR}`,
-      {},
-      { root: true }
-    )
-    this.context.commit(
-      `step/llvm-bitcode-generation/${hideLlvmBitcodeGenerationReport}`,
-      {},
-      { root: true }
-    )
-    this.context.commit(
-      `step/symbolic-execution/${hideSymbolicExecutionReport}`,
       {},
       { root: true }
     )
