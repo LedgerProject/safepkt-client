@@ -40,7 +40,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Watch, Vue, mixins } from 'nuxt-property-decorator'
+import { Component, Prop, Watch, Vue } from 'nuxt-property-decorator'
 import ngiLedgerEuCommissionLogos from '~/assets/ngi-ledger-eu-commission-logos.png'
 
 @Component
